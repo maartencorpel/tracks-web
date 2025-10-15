@@ -133,14 +133,14 @@ function CallbackPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
           <div className="text-7xl mb-4">🎵</div>
-          <CardTitle className="text-2xl text-white">
+          <CardTitle className="text-2xl">
             {error ? '❌ Error' : success ? '✅ Success!' : 'Joining game...'}
           </CardTitle>
-          <CardDescription className="text-white/80 text-lg">{status}</CardDescription>
+          <CardDescription className="text-lg">{status}</CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-6">

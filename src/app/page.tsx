@@ -111,13 +111,13 @@ function HomePageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Logo and Title */}
         <div className="text-center space-y-4">
           <div className="text-7xl mb-6">🎵</div>
-          <h1 className="text-3xl font-bold text-white mb-2">Join Spot Game</h1>
-          <p className="text-white/80 text-lg">Connect with friends and discover music together</p>
+          <h1 className="text-3xl font-bold mb-2">Join Spot Game</h1>
+          <p className="text-muted-foreground text-lg">Connect with friends and discover music together</p>
         </div>
 
         {/* Game ID Display */}

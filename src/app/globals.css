@@ -11,7 +11,7 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 142 71% 45%; /* Spotify green */
+    --primary: 142 76% 36%; /* Spotify green - slightly brighter for dark mode */
     --primary-foreground: 355.7 100% 97.3%;
     --secondary: 252 100% 67%; /* Spot purple */
     --secondary-foreground: 210 40% 98%;
@@ -23,7 +23,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 142 71% 45%; /* Spotify green */
+    --ring: 142 76% 36%; /* Spotify green - matches primary */
     --radius: 0.75rem;
   }
 }

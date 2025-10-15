@@ -44,7 +44,7 @@ function SuccessPageContent() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
           <div className="text-8xl mb-6 animate-bounce">🎉</div>
