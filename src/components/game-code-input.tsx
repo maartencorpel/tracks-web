@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
 } from '@/components/ui/input-otp';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -18,12 +19,11 @@ interface GameCodeInputProps {
 export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps) {
   const [gameId, setGameId] = useState('');
 
-  // Auto-submit when all 6 characters are entered
-  useEffect(() => {
+  const handleSubmit = () => {
     if (gameId.length === 6) {
       onJoin(gameId.toUpperCase());
     }
-  }, [gameId, onJoin]);
+  };
 
   return (
     <Card className="spot-container w-full max-w-md">
@@ -53,6 +53,23 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
             </InputOTPGroup>
           </InputOTP>
         </div>
+        
+        <Button 
+          onClick={handleSubmit}
+          className="w-full spot-button bg-primary hover:bg-primary/90 text-white font-semibold h-12" 
+          disabled={gameId.length !== 6 || isLoading}
+        >
+          {isLoading ? (
+            <>
+              <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              Verifying...
+            </>
+          ) : (
+            <>
+              🎮 Join Game
+            </>
+          )}
+        </Button>
         
         {isLoading && (
           <Alert className="border-primary/50 bg-primary/10">
