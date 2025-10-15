@@ -10,6 +10,22 @@ import { exchangeCodeForToken, fetchSpotifyUser, SPOTIFY_REDIRECT_URI } from '@/
 import { trackPageView, trackOAuthEvent, trackGameEvent, trackError } from '@/lib/analytics';
 import { SpotifyUser } from '@/types';
 
+/**
+ * Spotify OAuth Callback Page Component
+ * 
+ * This page handles the OAuth callback from Spotify after user authorization.
+ * It processes the authorization code, exchanges it for tokens, fetches user data,
+ * and adds the player to the game in Supabase.
+ * 
+ * OAuth Flow:
+ * 1. User clicks "Join with Spotify" on main page
+ * 2. Redirected to Spotify for authorization
+ * 3. Spotify redirects back to this page with authorization code
+ * 4. This page exchanges code for access/refresh tokens
+ * 5. Fetches Spotify user profile
+ * 6. Adds player to game in Supabase
+ * 7. Redirects to success page
+ */
 function CallbackPageContent() {
   const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
@@ -24,6 +40,12 @@ function CallbackPageContent() {
     handleCallback();
   }, []);
 
+  /**
+   * Logging utility for debugging OAuth flow
+   * 
+   * @param message - Log message to display
+   * @param isError - Whether this is an error message
+   */
   const log = (message: string, isError = false) => {
     const timestamp = new Date().toLocaleTimeString();
     const logMessage = `[${timestamp}] ${message}`;
@@ -37,11 +59,22 @@ function CallbackPageContent() {
     }
   };
 
+  /**
+   * Updates the progress indicator and status message
+   * 
+   * @param step - Current step number (1-4)
+   * @param statusMessage - Status message to display
+   */
   const updateProgress = (step: number, statusMessage: string) => {
     setCurrentStep(step);
     setStatus(statusMessage);
   };
 
+  /**
+   * Shows an error message and stops the loading state
+   * 
+   * @param message - Error message to display
+   */
   const showError = (message: string) => {
     setIsLoading(false);
     setError(message);
@@ -54,19 +87,32 @@ function CallbackPageContent() {
     setCurrentStep(4);
   };
 
+  /**
+   * Main OAuth callback handler
+   * 
+   * Processes the Spotify OAuth callback by:
+   * 1. Validating URL parameters and game ID
+   * 2. Exchanging authorization code for access/refresh tokens
+   * 3. Fetching Spotify user profile
+   * 4. Adding player to game in Supabase
+   * 5. Redirecting to success page
+   */
   const handleCallback = async () => {
     try {
       updateProgress(1, 'Processing authentication...');
       log('Processing OAuth callback');
       
-      // Parse authorization code from URL parameters
+      // Parse authorization code and error from URL parameters
       const code = searchParams.get('code');
       const error = searchParams.get('error');
       const state = searchParams.get('state');
+      
+      // Get game ID from state parameter or localStorage (fallback)
       const gameId = localStorage.getItem('pendingGameId') || state;
 
       log(`Game ID: ${gameId || 'Missing'}`);
 
+      // Validate OAuth response
       if (error) {
         throw new Error('Spotify authentication failed: ' + error);
       }
@@ -82,7 +128,8 @@ function CallbackPageContent() {
       updateProgress(2, 'Exchanging code for access token...');
       log('Exchanging code for token');
 
-      // Exchange authorization code for access token
+      // Exchange authorization code for access and refresh tokens
+      // This calls our secure server-side API route
       const tokenData = await exchangeCodeForToken(code, SPOTIFY_REDIRECT_URI);
       
       if (!tokenData || !tokenData.access_token) {
@@ -92,7 +139,7 @@ function CallbackPageContent() {
       updateProgress(3, 'Fetching your Spotify profile...');
       log('Fetching user profile');
 
-      // Fetch user profile from Spotify
+      // Fetch user profile from Spotify using the access token
       const userData: SpotifyUser = await fetchSpotifyUser(tokenData.access_token);
       log(`User: ${userData.display_name}`);
 
