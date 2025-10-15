@@ -136,9 +136,8 @@ function CallbackPageContent() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
-          <div className="text-7xl mb-4">🎵</div>
           <CardTitle className="text-2xl">
-            {error ? '❌ Error' : success ? '✅ Success!' : 'Joining game...'}
+            {error ? 'Error' : success ? 'Success!' : 'Joining game...'}
           </CardTitle>
           <CardDescription className="text-lg">{status}</CardDescription>
         </CardHeader>

@@ -47,7 +47,6 @@ function SuccessPageContent() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
-          <div className="text-8xl mb-6 animate-bounce">🎉</div>
           <CardTitle className="text-3xl">Successfully Joined!</CardTitle>
           <CardDescription className="text-lg">You've joined the game!</CardDescription>
         </CardHeader>
@@ -84,7 +83,7 @@ function SuccessPageContent() {
               className="w-full"
               size="lg"
             >
-              ✅ Done
+              Done
             </Button>
           </div>
         </CardContent>
