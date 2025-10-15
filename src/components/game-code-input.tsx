@@ -25,7 +25,7 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
   };
 
   return (
-    <Card className="spot-container w-full max-w-md">
+    <Card className="w-full max-w-md">
       <CardHeader className="text-center">
         <CardTitle className="text-xl">Enter Game Code</CardTitle>
         <CardDescription className="text-base">
@@ -54,8 +54,9 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
         
         <Button 
           onClick={handleSubmit}
-          className="w-full spot-button bg-primary hover:bg-primary/90 text-white font-semibold h-12" 
+          className="w-full" 
           disabled={gameId.length !== 6 || isLoading}
+          size="lg"
         >
           {isLoading ? (
             <>
@@ -70,7 +71,7 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
         </Button>
         
         {isLoading && (
-          <Alert className="border-primary/50 bg-primary/10">
+          <Alert>
             <AlertDescription className="text-center flex items-center justify-center">
               <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               Verifying game code...

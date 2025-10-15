@@ -111,24 +111,24 @@ function HomePageContent() {
   };
 
   return (
-    <div className="min-h-screen gradient-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-purple-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Logo and Title */}
         <div className="text-center space-y-4">
-          <div className="text-7xl mb-6 animate-float">🎵</div>
+          <div className="text-7xl mb-6">🎵</div>
           <h1 className="text-3xl font-bold text-white mb-2">Join Spot Game</h1>
           <p className="text-white/80 text-lg">Connect with friends and discover music together</p>
         </div>
 
         {/* Game ID Display */}
         {gameId && (
-          <Card className="spot-container animate-slide-up">
+          <Card>
             <CardHeader className="text-center pb-4">
               <CardTitle className="text-lg font-medium">Game Code</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center">
-                <div className="text-4xl font-bold text-gradient mb-4 font-mono tracking-wider bg-white/10 rounded-lg py-4 px-6 border border-white/20">
+                <div className="text-4xl font-bold mb-4 font-mono tracking-wider bg-muted rounded-lg py-4 px-6 border">
                   {gameId}
                 </div>
                 <Alert variant={getStatusVariant()}>
@@ -141,27 +141,23 @@ function HomePageContent() {
 
         {/* Game Code Input */}
         {showGameInput && (
-          <div className="animate-slide-up">
-            <GameCodeInput 
-              onJoin={handleJoinWithGameId}
-              isLoading={joinState === 'verifying'}
-            />
-          </div>
+          <GameCodeInput 
+            onJoin={handleJoinWithGameId}
+            isLoading={joinState === 'verifying'}
+          />
         )}
 
         {/* Error Display */}
         {joinState === 'error' && errorMessage && (
-          <div className="animate-slide-up">
-            <ErrorDisplay 
-              message={errorMessage}
-              onRetry={showGameInput ? () => setShowGameInput(true) : undefined}
-            />
-          </div>
+          <ErrorDisplay 
+            message={errorMessage}
+            onRetry={showGameInput ? () => setShowGameInput(true) : undefined}
+          />
         )}
 
         {/* Info Section */}
         {showGameInput && (
-          <Card className="spot-container animate-slide-up">
+          <Card>
             <CardHeader>
               <CardTitle className="text-lg">How it works</CardTitle>
             </CardHeader>
