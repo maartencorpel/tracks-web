@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
 import {
   InputOTP,
   InputOTPGroup,
@@ -39,7 +38,6 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
             maxLength={6}
             value={gameId}
             onChange={(value) => setGameId(value)}
-            pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
             disabled={isLoading}
             className="gap-2"
           >
