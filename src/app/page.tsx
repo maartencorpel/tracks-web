@@ -91,7 +91,7 @@ function HomePageContent() {
       case 'idle':
         return gameId ? 'Game found! Ready to join' : 'Enter the game code below to join';
       case 'error':
-        return 'Something went wrong';
+        return errorMessage || 'Something went wrong';
       default:
         return 'Ready to join!';
     }

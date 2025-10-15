@@ -20,13 +20,13 @@ export default function Error({ error, reset }: ErrorProps) {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
-          <CardTitle className="text-2xl">Something went wrong!</CardTitle>
+          <CardTitle className="text-2xl">Application Error</CardTitle>
         </CardHeader>
         
         <CardContent className="space-y-6">
           <Alert variant="destructive">
             <AlertDescription>
-              We encountered an unexpected error. This might be a temporary issue.
+              An unexpected application error occurred. This usually indicates a technical issue that needs to be resolved.
             </AlertDescription>
           </Alert>
           
