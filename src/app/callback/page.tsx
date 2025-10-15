@@ -130,14 +130,14 @@ function CallbackPageContent() {
   };
 
   return (
-    <div className="min-h-screen gradient-background flex items-center justify-center p-5">
+    <div className="min-h-screen gradient-background flex items-center justify-center p-4">
       <Card className="spot-container animate-slide-up w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="text-7xl mb-4">🎵</div>
-          <CardTitle className="text-2xl">
+        <CardHeader className="text-center space-y-4">
+          <div className="text-7xl mb-4 animate-float">🎵</div>
+          <CardTitle className="text-2xl text-white">
             {error ? '❌ Error' : success ? '✅ Success!' : 'Joining game...'}
           </CardTitle>
-          <CardDescription>{status}</CardDescription>
+          <CardDescription className="text-white/80 text-lg">{status}</CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-6">

@@ -123,25 +123,28 @@ function HomePageContent() {
   };
 
   return (
-    <div className="min-h-screen gradient-background flex items-center justify-center p-5">
+    <div className="min-h-screen gradient-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         {/* Logo and Title */}
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <div className="text-7xl mb-6 animate-float">🎵</div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Join Spot Game</h1>
-          <p className="text-muted-foreground">Connect with friends and discover music together</p>
+          <h1 className="text-3xl font-bold text-white mb-2">Join Spot Game</h1>
+          <p className="text-white/80 text-lg">Connect with friends and discover music together</p>
         </div>
 
         {/* Game ID Display */}
         {gameId && (
           <Card className="spot-container animate-slide-up">
-            <CardContent className="pt-6">
+            <CardHeader className="text-center pb-4">
+              <CardTitle className="text-lg font-medium">Game Code</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="text-center">
-                <div className="text-4xl font-bold text-secondary mb-4 font-mono tracking-wider">
+                <div className="text-4xl font-bold text-gradient mb-4 font-mono tracking-wider bg-white/10 rounded-lg py-4 px-6 border border-white/20">
                   {gameId}
                 </div>
                 <Alert variant={getStatusVariant()}>
-                  <AlertDescription>{getStatusMessage()}</AlertDescription>
+                  <AlertDescription className="text-center">{getStatusMessage()}</AlertDescription>
                 </Alert>
               </div>
             </CardContent>
@@ -173,7 +176,7 @@ function HomePageContent() {
           <div className="space-y-3 animate-slide-up">
             <Button 
               onClick={handleOpenApp}
-              className="w-full spot-button"
+              className="w-full spot-button bg-primary hover:bg-primary/90 text-white font-semibold"
               size="lg"
             >
               📱 Open in Spot App
@@ -181,7 +184,7 @@ function HomePageContent() {
             <Button 
               onClick={handleAuthenticateSpotify}
               variant="secondary"
-              className="w-full spot-button"
+              className="w-full spot-button bg-white/10 hover:bg-white/20 text-white border-white/20 font-semibold"
               size="lg"
             >
               🌐 Join via Browser
@@ -194,7 +197,7 @@ function HomePageContent() {
           <div className="text-center animate-slide-up">
             <a
               href="https://apps.apple.com/app/spot"
-              className="inline-flex items-center text-secondary hover:text-secondary/80 transition-colors"
+              className="inline-flex items-center text-white/80 hover:text-white transition-colors underline underline-offset-4"
             >
               ⬇️ Don't have the app? Download Spot
             </a>
@@ -203,10 +206,14 @@ function HomePageContent() {
 
         {/* Info Section */}
         {showGameInput && (
-          <Card className="animate-slide-up">
-            <CardContent className="pt-6">
-              <div className="text-sm text-muted-foreground">
-                <strong>How it works:</strong> Join a game by entering the code shared by the host, or scan the QR code. You can join using the Spot app or directly in your browser.
+          <Card className="spot-container animate-slide-up">
+            <CardHeader>
+              <CardTitle className="text-lg">How it works</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground space-y-2">
+                <p>Join a game by entering the code shared by the host, or scan the QR code.</p>
+                <p>You can join using the Spot app or directly in your browser.</p>
               </div>
             </CardContent>
           </Card>

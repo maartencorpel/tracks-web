@@ -9,13 +9,13 @@ interface ErrorDisplayProps {
 
 export function ErrorDisplay({ message, onRetry }: ErrorDisplayProps) {
   return (
-    <Alert variant="destructive" className="w-full max-w-md">
-      <AlertDescription className="flex items-center justify-between">
-        <span>{message}</span>
+    <Alert variant="destructive" className="w-full max-w-md border-2 border-destructive/50">
+      <AlertDescription className="flex items-center justify-between text-center">
+        <span className="flex-1">{message}</span>
         {onRetry && (
           <button
             onClick={onRetry}
-            className="ml-4 text-sm underline hover:no-underline"
+            className="ml-4 text-sm font-medium underline hover:no-underline transition-all"
           >
             Retry
           </button>

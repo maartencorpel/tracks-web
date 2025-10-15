@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
@@ -67,8 +69,20 @@
 
 /* Custom gradient background */
 .gradient-background {
-  background: var(--background-gradient);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   min-height: 100vh;
+  position: relative;
+}
+
+.gradient-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  pointer-events: none;
 }
 
 /* Custom animations */
@@ -102,7 +116,15 @@
 
 /* Custom container styles */
 .spot-container {
-  @apply relative overflow-hidden;
+  @apply relative overflow-hidden backdrop-blur-sm;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.dark .spot-container {
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .spot-container::before {
@@ -112,12 +134,18 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: var(--background-gradient);
+  background: linear-gradient(90deg, #1DB954 0%, #667eea 100%);
 }
 
 /* Custom button styles */
 .spot-button {
-  @apply relative overflow-hidden;
+  @apply relative overflow-hidden transition-all duration-300;
+  transform: translateY(0);
+}
+
+.spot-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .spot-button::before {
@@ -133,4 +161,42 @@
 
 .spot-button:hover::before {
   left: 100%;
+}
+
+/* Enhanced focus states */
+.spot-button:focus-visible {
+  @apply outline-none ring-2 ring-primary ring-offset-2;
+}
+
+/* Typography improvements */
+.text-gradient {
+  background: linear-gradient(135deg, #1DB954 0%, #667eea 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Improved spacing and layout */
+.space-y-6 > * + * {
+  margin-top: 1.5rem;
+}
+
+.space-y-4 > * + * {
+  margin-top: 1rem;
+}
+
+.space-y-3 > * + * {
+  margin-top: 0.75rem;
 }

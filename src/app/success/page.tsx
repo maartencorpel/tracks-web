@@ -57,12 +57,12 @@ function SuccessPageContent() {
   };
 
   return (
-    <div className="min-h-screen gradient-background flex items-center justify-center p-5">
+    <div className="min-h-screen gradient-background flex items-center justify-center p-4">
       <Card className="spot-container animate-slide-up w-full max-w-md">
-        <CardHeader className="text-center">
+        <CardHeader className="text-center space-y-4">
           <div className="text-8xl mb-6 animate-bounce">🎉</div>
-          <CardTitle className="text-3xl">Successfully Joined!</CardTitle>
-          <CardDescription className="text-lg">You're now part of the game</CardDescription>
+          <CardTitle className="text-3xl text-white">Successfully Joined!</CardTitle>
+          <CardDescription className="text-lg text-white/80">You're now part of the game</CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-6">
@@ -94,7 +94,7 @@ function SuccessPageContent() {
           <div className="space-y-3">
             <Button 
               onClick={closeWindow}
-              className="w-full spot-button"
+              className="w-full spot-button bg-primary hover:bg-primary/90 text-white font-semibold"
               size="lg"
             >
               ✅ Close Window
@@ -102,7 +102,7 @@ function SuccessPageContent() {
             <Button 
               onClick={openApp}
               variant="secondary"
-              className="w-full spot-button"
+              className="w-full spot-button bg-white/10 hover:bg-white/20 text-white border-white/20 font-semibold"
               size="lg"
             >
               📱 Open Spot App

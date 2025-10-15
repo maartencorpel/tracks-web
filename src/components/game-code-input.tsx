@@ -25,14 +25,14 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Enter Game Code</CardTitle>
-        <CardDescription>
-          Ask the host for the game code and enter it below:
+    <Card className="spot-container w-full max-w-md">
+      <CardHeader className="text-center">
+        <CardTitle className="text-xl">Enter Game Code</CardTitle>
+        <CardDescription className="text-base">
+          Ask the host for the game code and enter it below
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             type="text"
@@ -40,17 +40,17 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
             value={gameId}
             onChange={handleInputChange}
             maxLength={6}
-            className="text-center font-mono text-lg tracking-wider"
+            className="text-center font-mono text-xl tracking-wider h-14 text-lg border-2 focus:border-primary"
             disabled={isLoading}
           />
           <Button 
             type="submit" 
-            className="w-full" 
+            className="w-full spot-button bg-primary hover:bg-primary/90 text-white font-semibold h-12" 
             disabled={!gameId.trim() || isLoading}
           >
             {isLoading ? (
               <>
-                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
+                <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 Checking...
               </>
             ) : (
