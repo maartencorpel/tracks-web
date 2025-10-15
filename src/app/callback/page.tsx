@@ -24,11 +24,17 @@ function CallbackPageContent() {
     handleCallback();
   }, []);
 
-  const log = (message: string) => {
+  const log = (message: string, isError = false) => {
     const timestamp = new Date().toLocaleTimeString();
     const logMessage = `[${timestamp}] ${message}`;
+    
+    // Always log to console for debugging
     console.log(logMessage);
-    setDebugLog(prev => [...prev, logMessage]);
+    
+    // Only show in UI if in development mode or if it's an error
+    if (process.env.NODE_ENV === 'development' || isError) {
+      setDebugLog(prev => [...prev, logMessage]);
+    }
   };
 
   const updateProgress = (step: number, statusMessage: string) => {
@@ -51,8 +57,7 @@ function CallbackPageContent() {
   const handleCallback = async () => {
     try {
       updateProgress(1, 'Processing authentication...');
-      log('Callback page loaded');
-      log('URL: ' + window.location.href);
+      log('Processing OAuth callback');
       
       // Parse authorization code from URL parameters
       const code = searchParams.get('code');
@@ -60,9 +65,7 @@ function CallbackPageContent() {
       const state = searchParams.get('state');
       const gameId = localStorage.getItem('pendingGameId') || state;
 
-      log('Authorization Code: ' + (code ? 'Present' : 'Missing'));
-      log('Game ID: ' + (gameId || 'Missing'));
-      log('State: ' + (state || 'Missing'));
+      log(`Game ID: ${gameId || 'Missing'}`);
 
       if (error) {
         throw new Error('Spotify authentication failed: ' + error);
@@ -77,7 +80,7 @@ function CallbackPageContent() {
       }
 
       updateProgress(2, 'Exchanging code for access token...');
-      log('Exchanging authorization code for access token...');
+      log('Exchanging code for token');
 
       // Exchange authorization code for access token
       const tokenData = await exchangeCodeForToken(code, SPOTIFY_REDIRECT_URI);
@@ -87,14 +90,14 @@ function CallbackPageContent() {
       }
 
       updateProgress(3, 'Fetching your Spotify profile...');
-      log('Fetching user profile from Spotify...');
+      log('Fetching user profile');
 
       // Fetch user profile from Spotify
       const userData: SpotifyUser = await fetchSpotifyUser(tokenData.access_token);
-      log('User: ' + userData.display_name);
+      log(`User: ${userData.display_name}`);
 
       updateProgress(4, 'Joining game...');
-      log('Joining game ' + gameId + '...');
+      log(`Joining game ${gameId}`);
 
       // Join the game
       const result = await SupabaseService.joinGame(
@@ -108,7 +111,7 @@ function CallbackPageContent() {
         throw new Error(result.error || 'Failed to join game');
       }
 
-      log('Successfully joined game!');
+      log('Successfully joined game');
       
       // Track successful join
       trackGameEvent('game_join_success', gameId, {
@@ -123,7 +126,7 @@ function CallbackPageContent() {
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      log('ERROR: ' + errorMessage);
+      log('ERROR: ' + errorMessage, true); // Mark as error so it shows in production
       trackError(errorMessage, 'oauth_callback');
       showError(errorMessage);
     }

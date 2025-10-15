@@ -13,11 +13,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Spotify OAuth credentials
-    const SPOTIFY_CLIENT_ID = '530bf2b1f07841b8837a54b15bf6b64d';
+    const SPOTIFY_CLIENT_ID = process.env.NEXT_PUBLIC_SPOTIFY_CLIENT_ID;
     const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
     
-    if (!SPOTIFY_CLIENT_SECRET) {
-      console.error('SPOTIFY_CLIENT_SECRET environment variable not set');
+    if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET) {
+      console.error('Spotify environment variables not set:', {
+        CLIENT_ID: !!SPOTIFY_CLIENT_ID,
+        CLIENT_SECRET: !!SPOTIFY_CLIENT_SECRET
+      });
       return NextResponse.json(
         { error: 'Server configuration error' },
         { status: 500 }

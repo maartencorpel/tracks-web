@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GameCodeInput } from '@/components/game-code-input';
 import { ErrorDisplay } from '@/components/error-display';
+import ErrorBoundary from '@/components/error-boundary';
 import { SupabaseService } from '@/lib/supabase';
 import { generateSpotifyAuthUrl } from '@/lib/spotify';
 import { trackPageView, trackGameEvent, trackOAuthEvent, trackError } from '@/lib/analytics';
@@ -179,15 +180,17 @@ function HomePageContent() {
 
 export default function HomePage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-muted border-t-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
+    <ErrorBoundary>
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-muted border-t-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
         </div>
-      </div>
-    }>
-      <HomePageContent />
-    </Suspense>
+      }>
+        <HomePageContent />
+      </Suspense>
+    </ErrorBoundary>
   );
 }

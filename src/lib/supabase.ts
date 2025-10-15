@@ -40,13 +40,15 @@ export class SupabaseService {
         return { success: false, error: playerError.message }
       }
 
-      // Then, insert the player data with encrypted tokens
+      // Then, insert the player data
+      // TODO: Implement actual encryption before production deployment
+      // Currently storing tokens in plaintext - this is a security risk
       const { error: dataError } = await supabase
         .from('player_data')
         .insert({
           game_player_id: playerData.id,
-          encrypted_access_token: accessToken, // In production, encrypt this
-          encrypted_refresh_token: refreshToken || null, // In production, encrypt this
+          encrypted_access_token: accessToken, // TODO: Encrypt before storing
+          encrypted_refresh_token: refreshToken || null, // TODO: Encrypt before storing
           token_expiration: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
           tracks_count: 0,
           artists_count: 0,
