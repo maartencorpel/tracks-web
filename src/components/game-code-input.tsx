@@ -1,9 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
+import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from '@/components/ui/input-otp';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface GameCodeInputProps {
   onJoin: (gameId: string) => void;
@@ -13,16 +18,12 @@ interface GameCodeInputProps {
 export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps) {
   const [gameId, setGameId] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (gameId.trim()) {
-      onJoin(gameId.trim().toUpperCase());
+  // Auto-submit when all 6 characters are entered
+  useEffect(() => {
+    if (gameId.length === 6) {
+      onJoin(gameId.toUpperCase());
     }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setGameId(e.target.value.toUpperCase());
-  };
+  }, [gameId, onJoin]);
 
   return (
     <Card className="spot-container w-full max-w-md">
@@ -33,33 +34,34 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            type="text"
-            placeholder="e.g. ABC123"
-            value={gameId}
-            onChange={handleInputChange}
+        <div className="flex justify-center">
+          <InputOTP
             maxLength={6}
-            className="text-center font-mono text-xl tracking-wider h-14 text-lg border-2 focus:border-primary"
+            value={gameId}
+            onChange={(value) => setGameId(value)}
+            pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
             disabled={isLoading}
-          />
-          <Button 
-            type="submit" 
-            className="w-full spot-button bg-primary hover:bg-primary/90 text-white font-semibold h-12" 
-            disabled={!gameId.trim() || isLoading}
+            className="gap-2"
           >
-            {isLoading ? (
-              <>
-                <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Checking...
-              </>
-            ) : (
-              <>
-                🎮 Join Game
-              </>
-            )}
-          </Button>
-        </form>
+            <InputOTPGroup className="gap-2">
+              <InputOTPSlot index={0} className="w-12 h-12 text-lg font-mono" />
+              <InputOTPSlot index={1} className="w-12 h-12 text-lg font-mono" />
+              <InputOTPSlot index={2} className="w-12 h-12 text-lg font-mono" />
+              <InputOTPSlot index={3} className="w-12 h-12 text-lg font-mono" />
+              <InputOTPSlot index={4} className="w-12 h-12 text-lg font-mono" />
+              <InputOTPSlot index={5} className="w-12 h-12 text-lg font-mono" />
+            </InputOTPGroup>
+          </InputOTP>
+        </div>
+        
+        {isLoading && (
+          <Alert className="border-primary/50 bg-primary/10">
+            <AlertDescription className="text-center flex items-center justify-center">
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              Verifying game code...
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
     </Card>
   );

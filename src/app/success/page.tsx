@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { generateDeepLink } from '@/lib/spotify';
 import { trackPageView } from '@/lib/analytics';
 
 function SuccessPageContent() {
@@ -43,18 +42,6 @@ function SuccessPageContent() {
     }, 100);
   };
 
-  const openApp = () => {
-    if (gameId) {
-      window.location.href = generateDeepLink(gameId);
-    } else {
-      window.location.href = 'spot://';
-    }
-    
-    // Fallback message
-    setTimeout(() => {
-      alert('If the app didn\'t open, make sure you have Spot installed.');
-    }, 1500);
-  };
 
   return (
     <div className="min-h-screen gradient-background flex items-center justify-center p-4">
@@ -62,7 +49,7 @@ function SuccessPageContent() {
         <CardHeader className="text-center space-y-4">
           <div className="text-8xl mb-6 animate-bounce">🎉</div>
           <CardTitle className="text-3xl text-white">Successfully Joined!</CardTitle>
-          <CardDescription className="text-lg text-white/80">You're now part of the game</CardDescription>
+          <CardDescription className="text-lg text-white/80">You've joined the game!</CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-6">
@@ -70,8 +57,8 @@ function SuccessPageContent() {
           <Alert variant="success">
             <AlertDescription>
               {gameId 
-                ? `Welcome to game ${gameId}! You can now close this window and return to the Spot app.`
-                : 'Welcome to the game! You can now close this window and return to the Spot app.'
+                ? `Welcome to game ${gameId}! Return to the host's device to start playing.`
+                : 'Welcome to the game! Return to the host\'s device to start playing.'
               }
             </AlertDescription>
           </Alert>
@@ -83,7 +70,7 @@ function SuccessPageContent() {
             </CardHeader>
             <CardContent>
               <ul className="text-sm text-muted-foreground space-y-2">
-                <li>• Close this window and return to the Spot app</li>
+                <li>• Return to the host's device</li>
                 <li>• Wait for the host to start the game</li>
                 <li>• Get ready to discover amazing music together!</li>
               </ul>
@@ -97,15 +84,7 @@ function SuccessPageContent() {
               className="w-full spot-button bg-primary hover:bg-primary/90 text-white font-semibold"
               size="lg"
             >
-              ✅ Close Window
-            </Button>
-            <Button 
-              onClick={openApp}
-              variant="secondary"
-              className="w-full spot-button bg-white/10 hover:bg-white/20 text-white border-white/20 font-semibold"
-              size="lg"
-            >
-              📱 Open Spot App
+              ✅ Done
             </Button>
           </div>
         </CardContent>

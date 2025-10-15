@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GameCodeInput } from '@/components/game-code-input';
 import { ErrorDisplay } from '@/components/error-display';
 import { SupabaseService } from '@/lib/supabase';
-import { generateSpotifyAuthUrl, openApp } from '@/lib/spotify';
+import { generateSpotifyAuthUrl } from '@/lib/spotify';
 import { trackPageView, trackGameEvent, trackOAuthEvent, trackError } from '@/lib/analytics';
 import { JoinState } from '@/types';
 
@@ -18,7 +18,6 @@ function HomePageContent() {
   const [joinState, setJoinState] = useState<JoinState>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showGameInput, setShowGameInput] = useState(false);
-  const [showDownloadLink, setShowDownloadLink] = useState(false);
 
   // Get game ID from URL parameters
   useEffect(() => {
@@ -47,8 +46,10 @@ function HomePageContent() {
         setJoinState('idle');
         trackGameEvent('game_verified', gameIdToCheck);
         
-        // Try to open app automatically
-        attemptAppOpen(gameIdToCheck);
+        // Automatically redirect to Spotify authentication
+        setTimeout(() => {
+          handleAuthenticateSpotify(gameIdToCheck);
+        }, 1000);
       } else {
         setJoinState('error');
         setErrorMessage('This game code doesn\'t exist. Please check the code and try again.');
@@ -62,14 +63,6 @@ function HomePageContent() {
     }
   };
 
-  const attemptAppOpen = (gameIdToOpen: string) => {
-    openApp(gameIdToOpen);
-    
-    // If app doesn't open in 2 seconds, show download link
-    setTimeout(() => {
-      setShowDownloadLink(true);
-    }, 2000);
-  };
 
   const handleJoinWithGameId = async (inputGameId: string) => {
     setGameId(inputGameId);
@@ -77,22 +70,16 @@ function HomePageContent() {
     await checkGame(inputGameId);
   };
 
-  const handleOpenApp = () => {
-    if (gameId) {
-      trackGameEvent('app_open_attempted', gameId);
-      openApp(gameId);
-    }
-  };
-
-  const handleAuthenticateSpotify = () => {
-    if (gameId) {
-      trackOAuthEvent('spotify_auth_attempted', gameId);
+  const handleAuthenticateSpotify = (gameIdToAuth?: string) => {
+    const targetGameId = gameIdToAuth || gameId;
+    if (targetGameId) {
+      trackOAuthEvent('spotify_auth_attempted', targetGameId);
       
       // Store game ID for after redirect
-      localStorage.setItem('pendingGameId', gameId);
+      localStorage.setItem('pendingGameId', targetGameId);
       
       // Redirect to Spotify
-      window.location.href = generateSpotifyAuthUrl(gameId);
+      window.location.href = generateSpotifyAuthUrl(targetGameId);
     }
   };
 
@@ -171,39 +158,6 @@ function HomePageContent() {
           </div>
         )}
 
-        {/* Action Buttons */}
-        {gameId && joinState === 'idle' && !showGameInput && (
-          <div className="space-y-3 animate-slide-up">
-            <Button 
-              onClick={handleOpenApp}
-              className="w-full spot-button bg-primary hover:bg-primary/90 text-white font-semibold"
-              size="lg"
-            >
-              📱 Open in Spot App
-            </Button>
-            <Button 
-              onClick={handleAuthenticateSpotify}
-              variant="secondary"
-              className="w-full spot-button bg-white/10 hover:bg-white/20 text-white border-white/20 font-semibold"
-              size="lg"
-            >
-              🌐 Join via Browser
-            </Button>
-          </div>
-        )}
-
-        {/* Download Link */}
-        {showDownloadLink && (
-          <div className="text-center animate-slide-up">
-            <a
-              href="https://apps.apple.com/app/spot"
-              className="inline-flex items-center text-white/80 hover:text-white transition-colors underline underline-offset-4"
-            >
-              ⬇️ Don't have the app? Download Spot
-            </a>
-          </div>
-        )}
-
         {/* Info Section */}
         {showGameInput && (
           <Card className="spot-container animate-slide-up">
@@ -212,8 +166,8 @@ function HomePageContent() {
             </CardHeader>
             <CardContent>
               <div className="text-sm text-muted-foreground space-y-2">
-                <p>Join a game by entering the code shared by the host, or scan the QR code.</p>
-                <p>You can join using the Spot app or directly in your browser.</p>
+                <p>Enter the game code shared by the host to join the game.</p>
+                <p>You'll be redirected to Spotify to authenticate and join.</p>
               </div>
             </CardContent>
           </Card>

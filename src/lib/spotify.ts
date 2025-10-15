@@ -13,14 +13,6 @@ export const getSpotifyAuthUrl = (gameId: string) => {
 
 export const generateSpotifyAuthUrl = getSpotifyAuthUrl
 
-export const openApp = (gameId: string) => {
-  const deepLink = `spot://join?game=${gameId}`
-  window.location.href = deepLink
-}
-
-export const generateDeepLink = (gameId: string) => {
-  return `spot://join?game=${gameId}`
-}
 
 export const exchangeCodeForToken = async (code: string, redirectUri: string) => {
   const response = await fetch('/api/spotify/token', {
