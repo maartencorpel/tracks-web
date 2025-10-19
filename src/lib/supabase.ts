@@ -104,27 +104,24 @@ export class SupabaseService {
    * @returns Promise resolving to base64-encoded encrypted token
    */
   private static async encryptToken(token: string, gameId: string): Promise<string> {
-    // Import crypto for AES-GCM encryption (matches iOS CryptoKit)
+    // Import crypto for AES encryption
     const crypto = await import('crypto')
     
-    // Generate encryption key from game ID using SHA256 (matches iOS implementation)
+    // Generate encryption key from game ID using SHA256
     const key = crypto.createHash('sha256').update(gameId).digest()
     
-    // Generate random nonce (12 bytes for GCM)
-    const nonce = crypto.randomBytes(12)
+    // Generate random IV (16 bytes for AES-256-CBC)
+    const iv = crypto.randomBytes(16)
     
-    // Create cipher using AES-256-GCM
-    const cipher = crypto.createCipherGCM('aes-256-gcm', key, nonce)
+    // Create cipher using AES-256-CBC
+    const cipher = crypto.createCipher('aes-256-cbc', key)
     
     // Encrypt the token
-    let encrypted = cipher.update(token, 'utf8')
-    encrypted = Buffer.concat([encrypted, cipher.final()])
+    let encrypted = cipher.update(token, 'utf8', 'base64')
+    encrypted += cipher.final('base64')
     
-    // Get the authentication tag
-    const tag = cipher.getAuthTag()
-    
-    // Combine nonce + ciphertext + tag (matches iOS format)
-    const combined = Buffer.concat([nonce, encrypted, tag])
+    // Combine IV + encrypted data
+    const combined = Buffer.concat([iv, Buffer.from(encrypted, 'base64')])
     
     return combined.toString('base64')
   }
