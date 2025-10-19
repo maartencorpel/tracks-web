@@ -44,9 +44,6 @@ export class SupabaseService {
    * Creates records in both game_players and player_data tables.
    * The iOS app uses this data to synchronize players and manage game state.
    * 
-   * SECURITY NOTE: Tokens are currently stored in plaintext and must be encrypted
-   * before production deployment. See supabase-schema.sql for encryption guidance.
-   * 
    * @param gameId - 6-character game code
    * @param spotifyUser - Spotify user profile data
    * @param accessToken - Spotify access token for API calls
@@ -72,15 +69,17 @@ export class SupabaseService {
         return { success: false, error: playerError.message }
       }
 
-      // Then, insert the player data with Spotify credentials
-      // TODO: Implement actual encryption before production deployment
-      // Currently storing tokens in plaintext - this is a security risk
+      // Encrypt tokens using the same algorithm as iOS app
+      const encryptedAccess = await this.encryptToken(accessToken, gameId)
+      const encryptedRefresh = refreshToken ? await this.encryptToken(refreshToken, gameId) : null
+
+      // Insert the player data with encrypted Spotify credentials
       const { error: dataError } = await supabase
         .from('player_data')
         .insert({
           game_player_id: playerData.id,
-          encrypted_access_token: accessToken, // TODO: Encrypt before storing
-          encrypted_refresh_token: refreshToken || null, // TODO: Encrypt before storing
+          encrypted_access_token: encryptedAccess,
+          encrypted_refresh_token: encryptedRefresh,
           token_expiration: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
           tracks_count: 0,
           artists_count: 0,
@@ -94,5 +93,39 @@ export class SupabaseService {
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
     }
+  }
+
+  /**
+   * Encrypts a token using AES-GCM with game-specific key
+   * This matches the encryption algorithm used in the iOS app
+   * 
+   * @param token - Token to encrypt
+   * @param gameId - Game ID used as encryption key
+   * @returns Promise resolving to base64-encoded encrypted token
+   */
+  private static async encryptToken(token: string, gameId: string): Promise<string> {
+    // Import crypto for AES-GCM encryption (matches iOS CryptoKit)
+    const crypto = await import('crypto')
+    
+    // Generate encryption key from game ID using SHA256 (matches iOS implementation)
+    const key = crypto.createHash('sha256').update(gameId).digest()
+    
+    // Generate random nonce (12 bytes for GCM)
+    const nonce = crypto.randomBytes(12)
+    
+    // Create cipher using AES-256-GCM
+    const cipher = crypto.createCipherGCM('aes-256-gcm', key, nonce)
+    
+    // Encrypt the token
+    let encrypted = cipher.update(token, 'utf8')
+    encrypted = Buffer.concat([encrypted, cipher.final()])
+    
+    // Get the authentication tag
+    const tag = cipher.getAuthTag()
+    
+    // Combine nonce + ciphertext + tag (matches iOS format)
+    const combined = Buffer.concat([nonce, encrypted, tag])
+    
+    return combined.toString('base64')
   }
 }
