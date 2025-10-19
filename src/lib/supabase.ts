@@ -104,25 +104,38 @@ export class SupabaseService {
    * @returns Promise resolving to base64-encoded encrypted token
    */
   private static async encryptToken(token: string, gameId: string): Promise<string> {
-    // Import crypto for AES encryption
-    const crypto = await import('crypto')
+    // Generate encryption key from game ID using SHA-256
+    const encoder = new TextEncoder()
+    const gameIdData = encoder.encode(gameId)
+    const keyData = await crypto.subtle.digest('SHA-256', gameIdData)
     
-    // Generate encryption key from game ID using SHA256
-    const key = crypto.createHash('sha256').update(gameId).digest()
+    // Import the key for AES-GCM
+    const key = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['encrypt']
+    )
     
-    // Generate random IV (16 bytes for AES-256-CBC)
-    const iv = crypto.randomBytes(16)
+    // Generate random nonce (12 bytes for GCM)
+    const nonce = crypto.getRandomValues(new Uint8Array(12))
     
-    // Create cipher using AES-256-CBC
-    const cipher = crypto.createCipher('aes-256-cbc', key)
+    // Encrypt using AES-GCM
+    const tokenData = encoder.encode(token)
+    const encrypted = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv: nonce },
+      key,
+      tokenData
+    )
     
-    // Encrypt the token
-    let encrypted = cipher.update(token, 'utf8', 'base64')
-    encrypted += cipher.final('base64')
+    // The encrypted result from Web Crypto contains ciphertext + tag
+    // Combine nonce + encrypted (which includes tag)
+    const combined = new Uint8Array(nonce.length + encrypted.byteLength)
+    combined.set(nonce, 0)
+    combined.set(new Uint8Array(encrypted), nonce.length)
     
-    // Combine IV + encrypted data
-    const combined = Buffer.concat([iv, Buffer.from(encrypted, 'base64')])
-    
-    return combined.toString('base64')
+    // Convert to base64
+    return Buffer.from(combined).toString('base64')
   }
 }
