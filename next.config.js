@@ -25,7 +25,7 @@ const securityHeaders = [
   },
   {
     key: 'Content-Security-Policy',
-    value: "default-src 'self'; img-src 'self' data: https://i.scdn.co https://*.spotifycdn.com; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' https://accounts.spotify.com https://api.spotify.com https://*.supabase.co; frame-ancestors 'none';"
+    value: "default-src 'self'; img-src 'self' data: https://i.scdn.co https://*.spotifycdn.com; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://accounts.spotify.com https://api.spotify.com https://*.supabase.co; frame-ancestors 'none';"
   },
 ]
 
