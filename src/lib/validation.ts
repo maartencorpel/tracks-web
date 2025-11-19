@@ -106,11 +106,12 @@ export function validateRedirectUri(uri: string | null | undefined): ValidationR
   try {
     const url = new URL(trimmed)
     
-    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    // Spotify requires HTTPS only (HTTP redirect URIs deprecated as of Nov 2025)
+    if (url.protocol !== 'https:') {
       return {
         valid: false,
         value: null,
-        error: 'Redirect URI must use http or https protocol',
+        error: 'Redirect URI must use HTTPS protocol (HTTP is no longer supported)',
       }
     }
 
