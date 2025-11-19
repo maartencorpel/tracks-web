@@ -25,9 +25,12 @@ const ALLOWED_REDIRECT_URIS = RAW_ALLOWED_REDIRECTS.map((uri) => uri.trim()).fil
  */
 export async function POST(request: NextRequest) {
   try {
+    // Get client IP from headers (Next.js 15 doesn't have request.ip)
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    const realIp = request.headers.get('x-real-ip');
     const identifier =
-      request.ip ||
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      forwardedFor?.split(',')[0]?.trim() ||
+      realIp ||
       'unknown';
 
     if (!rateLimit(identifier)) {
