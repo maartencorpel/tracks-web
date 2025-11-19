@@ -124,6 +124,9 @@ NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=https://your-domain.com/callback
 
 # Spotify API (Server-side only)
 SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
+
+# Security
+SPOTIFY_REDIRECT_URI_ALLOWLIST=https://your-domain.com/callback,https://staging.your-domain.com/callback
 ```
 
 ### Required Spotify Scopes
@@ -191,8 +194,9 @@ This website integrates with:
 
 ### Known Issues
 - ⚠️ **Token encryption not implemented** - Currently storing tokens in plaintext
-- ⚠️ **No rate limiting** on API routes
-- ⚠️ **Limited input validation** on game codes
+- ✅ Rate limiting on token exchange endpoint (5 req/min per IP)
+- ✅ Global security headers (HSTS, CSP, Permissions-Policy)
+- ✅ Strong input validation on game codes and OAuth payloads
 
 See [IMPROVEMENTS.md](./IMPROVEMENTS.md) for detailed security recommendations.
 

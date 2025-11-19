@@ -7,6 +7,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ProgressSteps } from '@/components/progress-steps';
 import { SupabaseService } from '@/lib/supabase';
 import { exchangeCodeForToken, fetchSpotifyUser, SPOTIFY_REDIRECT_URI } from '@/lib/spotify';
+import { browserStorage, PENDING_GAME_ID_KEY } from '@/lib/browser-storage';
+import { validateGameCode, validateSpotifyCode } from '@/lib/validation';
 import { trackPageView, trackOAuthEvent, trackGameEvent, trackError } from '@/lib/analytics';
 import { SpotifyUser } from '@/types';
 
@@ -103,27 +105,31 @@ function CallbackPageContent() {
       log('Processing OAuth callback');
       
       // Parse authorization code and error from URL parameters
-      const code = searchParams.get('code');
-      const error = searchParams.get('error');
-      const state = searchParams.get('state');
-      
-      // Get game ID from state parameter or localStorage (fallback)
-      const gameId = localStorage.getItem('pendingGameId') || state;
+      const codeParam = searchParams.get('code');
+      const oauthError = searchParams.get('error');
+      const stateParam = searchParams.get('state');
 
-      log(`Game ID: ${gameId || 'Missing'}`);
+      // Prefer stored game ID, otherwise fallback to state parameter
+      const storedGameId = browserStorage.get(PENDING_GAME_ID_KEY);
+      const gameIdResult = validateGameCode(storedGameId || stateParam);
+      const codeResult = validateSpotifyCode(codeParam);
 
-      // Validate OAuth response
-      if (error) {
-        throw new Error('Spotify authentication failed: ' + error);
+      if (oauthError) {
+        throw new Error('Spotify authentication failed: ' + oauthError);
       }
-      
-      if (!code) {
-        throw new Error('No authorization code received from Spotify');
+
+      if (!codeResult.valid || !codeResult.value) {
+        throw new Error(codeResult.error || 'No authorization code received from Spotify');
       }
-      
-      if (!gameId) {
-        throw new Error('No game ID found. Please try joining again.');
+
+      if (!gameIdResult.valid || !gameIdResult.value) {
+        throw new Error(gameIdResult.error || 'No game ID found. Please try joining again.');
       }
+
+      const gameId = gameIdResult.value;
+      const code = codeResult.value;
+
+      log(`Game ID: ${gameId}`);
 
       updateProgress(2, 'Exchanging code for access token...');
       log('Exchanging code for token');
@@ -169,7 +175,7 @@ function CallbackPageContent() {
       showSuccess(`Welcome to the game, ${userData.display_name}! You can close this window and return to the Spot app.`);
 
       // Clear stored game ID
-      localStorage.removeItem('pendingGameId');
+      browserStorage.remove(PENDING_GAME_ID_KEY);
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

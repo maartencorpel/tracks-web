@@ -673,6 +673,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_production_key
 NEXT_PUBLIC_SPOTIFY_CLIENT_ID=530bf2b1f07841b8837a54b15bf6b64d
 NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=https://spot-join-web.vercel.app/callback
 SPOTIFY_CLIENT_SECRET=your_production_secret
+SPOTIFY_REDIRECT_URI_ALLOWLIST=https://spot-join-web.vercel.app/callback
 ```
 
 ### Monitoring & Observability

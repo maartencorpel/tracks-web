@@ -10,6 +10,8 @@ import { ErrorDisplay } from '@/components/error-display';
 import ErrorBoundary from '@/components/error-boundary';
 import { SupabaseService } from '@/lib/supabase';
 import { generateSpotifyAuthUrl } from '@/lib/spotify';
+import { browserStorage, PENDING_GAME_ID_KEY } from '@/lib/browser-storage';
+import { validateGameCode } from '@/lib/validation';
 import { trackPageView, trackGameEvent, trackOAuthEvent, trackError } from '@/lib/analytics';
 import { JoinState } from '@/types';
 
@@ -22,18 +24,27 @@ function HomePageContent() {
 
   // Get game ID from URL parameters
   useEffect(() => {
-    const urlGameId = searchParams.get('game')?.toUpperCase();
-    if (urlGameId) {
-      setGameId(urlGameId);
-      setJoinState('verifying');
-      checkGame(urlGameId);
+    const rawGameId = searchParams.get('game');
+    if (rawGameId) {
+      const validation = validateGameCode(rawGameId);
+      if (validation.valid && validation.value) {
+        const normalizedGameId = validation.value;
+        setGameId(normalizedGameId);
+        setJoinState('verifying');
+        checkGame(normalizedGameId);
+      } else {
+        setShowGameInput(true);
+        setJoinState('error');
+        setErrorMessage(validation.error || 'Invalid game code provided.');
+      }
     } else {
       setShowGameInput(true);
       setJoinState('idle');
     }
 
     // Track page view
-    trackPageView('join_game', urlGameId || undefined);
+    const rawGameId = searchParams.get('game');
+    trackPageView('join_game', rawGameId || undefined);
   }, [searchParams]);
 
   const checkGame = async (gameIdToCheck: string) => {
@@ -66,9 +77,20 @@ function HomePageContent() {
 
 
   const handleJoinWithGameId = async (inputGameId: string) => {
-    setGameId(inputGameId);
+    const validation = validateGameCode(inputGameId);
+
+    if (!validation.valid || !validation.value) {
+      setJoinState('error');
+      setShowGameInput(true);
+      setErrorMessage(validation.error || 'Invalid game code.');
+      trackError('invalid_game_code', 'handleJoinWithGameId');
+      return;
+    }
+
+    const normalizedGameId = validation.value;
+    setGameId(normalizedGameId);
     setShowGameInput(false);
-    await checkGame(inputGameId);
+    await checkGame(normalizedGameId);
   };
 
   const handleAuthenticateSpotify = (gameIdToAuth?: string) => {
@@ -77,7 +99,7 @@ function HomePageContent() {
       trackOAuthEvent('spotify_auth_attempted', targetGameId);
       
       // Store game ID for after redirect
-      localStorage.setItem('pendingGameId', targetGameId);
+      browserStorage.set(PENDING_GAME_ID_KEY, targetGameId);
       
       // Redirect to Spotify
       window.location.href = generateSpotifyAuthUrl(targetGameId);

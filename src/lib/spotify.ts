@@ -17,7 +17,15 @@ export const SPOTIFY_REDIRECT_URI = process.env.NEXT_PUBLIC_SPOTIFY_REDIRECT_URI
  */
 export const getSpotifyAuthUrl = (gameId: string) => {
   // Required scopes for accessing user's Spotify data
-  const scopes = 'user-top-read user-read-email user-read-private'
+  const scopes = [
+    'user-top-read',
+    'user-read-email',
+    'user-read-private',
+    'user-read-playback-state',
+    'user-modify-playback-state',
+    'playlist-modify-private',
+    'user-library-read',
+  ].join(' ')
   
   return `https://accounts.spotify.com/authorize?` +
     `client_id=${SPOTIFY_CLIENT_ID}` +

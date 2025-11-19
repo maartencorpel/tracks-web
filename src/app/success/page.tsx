@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { trackPageView } from '@/lib/analytics';
+import { browserStorage, PENDING_GAME_ID_KEY } from '@/lib/browser-storage';
 
 function SuccessPageContent() {
   const searchParams = useSearchParams();
@@ -14,7 +15,7 @@ function SuccessPageContent() {
   useEffect(() => {
     // Get game ID from URL or localStorage
     const urlGameId = searchParams.get('game');
-    const storedGameId = localStorage.getItem('pendingGameId');
+    const storedGameId = browserStorage.get(PENDING_GAME_ID_KEY);
     const finalGameId = urlGameId || storedGameId;
     
     if (finalGameId) {

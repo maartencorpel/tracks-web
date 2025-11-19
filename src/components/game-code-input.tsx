@@ -37,7 +37,7 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
           <InputOTP
             maxLength={6}
             value={gameId}
-            onChange={(value) => setGameId(value)}
+            onChange={(value) => setGameId(value.toUpperCase())}
             disabled={isLoading}
             className="gap-2"
           >

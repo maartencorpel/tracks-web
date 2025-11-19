@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TokenData } from '@/types';
+import { rateLimit } from '@/lib/rate-limit';
+import { validateSpotifyCode, validateRedirectUri } from '@/lib/validation';
 
+
+const RAW_ALLOWED_REDIRECTS = (process.env.SPOTIFY_REDIRECT_URI_ALLOWLIST || process.env.NEXT_PUBLIC_SPOTIFY_REDIRECT_URI || '').split(',');
+const ALLOWED_REDIRECT_URIS = RAW_ALLOWED_REDIRECTS.map((uri) => uri.trim()).filter(Boolean);
 /**
  * Spotify OAuth Token Exchange API Route
  * 
@@ -20,12 +25,42 @@ import { TokenData } from '@/types';
  */
 export async function POST(request: NextRequest) {
   try {
-    const { code, redirect_uri } = await request.json();
+    const identifier =
+      request.ip ||
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      'unknown';
 
-    // Validate required parameters
-    if (!code || !redirect_uri) {
+    if (!rateLimit(identifier)) {
       return NextResponse.json(
-        { error: 'Missing required parameters: code and redirect_uri' },
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
+    const body = await request.json();
+    const codeResult = validateSpotifyCode(body?.code ?? null);
+    const redirectResult = validateRedirectUri(body?.redirect_uri ?? null);
+
+    if (!codeResult.valid || !codeResult.value) {
+      return NextResponse.json(
+        { error: codeResult.error || 'Invalid authorization code.' },
+        { status: 400 }
+      );
+    }
+
+    if (!redirectResult.valid || !redirectResult.value) {
+      return NextResponse.json(
+        { error: redirectResult.error || 'Invalid redirect URI.' },
+        { status: 400 }
+      );
+    }
+
+    const code = codeResult.value;
+    const redirect_uri = redirectResult.value;
+
+    if (ALLOWED_REDIRECT_URIS.length > 0 && !ALLOWED_REDIRECT_URIS.includes(redirect_uri)) {
+      return NextResponse.json(
+        { error: 'Redirect URI is not allowed.' },
         { status: 400 }
       );
     }

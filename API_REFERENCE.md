@@ -35,9 +35,10 @@ Exchanges Spotify authorization code for access and refresh tokens.
 }
 ```
 
-**Error Responses:**
-- `400 Bad Request` - Invalid request body
+**Error Responses / Protections:**
+- `400 Bad Request` - Invalid request body or redirect URI not on allowlist
 - `401 Unauthorized` - Invalid authorization code
+- `429 Too Many Requests` - Rate limit exceeded (5 req/min per IP)
 - `500 Internal Server Error` - Server-side error
 
 **Implementation:**
@@ -95,10 +96,11 @@ POST https://accounts.spotify.com/api/token
 
 **Parameters:**
 - `grant_type` - "authorization_code"
-- `code` - Authorization code
-- `redirect_uri` - Same as authorization request
+- `code` - Authorization code (validated for length)
+- `redirect_uri` - Must match one of the values in `SPOTIFY_REDIRECT_URI_ALLOWLIST`
 - `client_id` - Spotify application client ID
 - `client_secret` - Spotify application client secret
+- `state` - Game code (validated server-side)
 
 ### Spotify Web API
 
@@ -220,6 +222,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 NEXT_PUBLIC_SPOTIFY_CLIENT_ID=your_client_id
 NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=https://your-domain.com/callback
 SPOTIFY_CLIENT_SECRET=your_client_secret
+SPOTIFY_REDIRECT_URI_ALLOWLIST=https://your-domain.com/callback,https://staging.your-domain.com/callback
 ```
 
 ### Development vs Production
