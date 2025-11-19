@@ -43,7 +43,6 @@ function HomePageContent() {
     }
 
     // Track page view
-    const rawGameId = searchParams.get('game');
     trackPageView('join_game', rawGameId || undefined);
   }, [searchParams]);
 
