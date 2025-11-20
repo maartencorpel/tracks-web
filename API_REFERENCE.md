@@ -253,7 +253,7 @@ NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=https://spot-join-web.vercel.app/callback
 ```typescript
 // Game model
 interface Game {
-  id: string;                    // 6-character game code
+  id: string;                    // 4-character game code
   status: 'waiting' | 'playing' | 'finished';
   created_at: string;            // ISO timestamp
   host_id: string;              // Host device ID

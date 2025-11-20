@@ -143,8 +143,8 @@ Limited input validation on game codes and user inputs.
 import { z } from 'zod'
 
 export const gameCodeSchema = z.string()
-  .length(6, 'Game code must be exactly 6 characters')
-  .regex(/^[A-Z0-9]+$/, 'Game code must contain only uppercase letters and numbers')
+  .length(4, 'Game code must be exactly 4 characters')
+  .regex(/^[0-9]+$/, 'Game code must contain only numbers')
 
 export const spotifyCodeSchema = z.string()
   .min(1, 'Authorization code is required')
@@ -699,7 +699,7 @@ export async function exchangeCodeForToken(
 
 /**
  * Validates game code format and checks if game exists
- * @param gameCode - 6-character game code to validate
+ * @param gameCode - 4-character game code to validate
  * @returns Promise resolving to validation result
  */
 export async function validateGameCode(gameCode: string): Promise<GameValidationResult> {

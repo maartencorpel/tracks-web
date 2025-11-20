@@ -12,7 +12,7 @@ export const SPOTIFY_REDIRECT_URI = process.env.NEXT_PUBLIC_SPOTIFY_REDIRECT_URI
  * 4. Spotify redirects back to callback URL with authorization code
  * 5. Server exchanges code for access/refresh tokens
  * 
- * @param gameId - 6-character game code to include in OAuth state
+ * @param gameId - 4-character game code to include in OAuth state
  * @returns Complete Spotify OAuth authorization URL
  */
 export const getSpotifyAuthUrl = (gameId: string) => {

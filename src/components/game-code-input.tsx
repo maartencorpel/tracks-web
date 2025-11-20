@@ -6,6 +6,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from '@/components/ui/input-otp';
+import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -19,8 +20,8 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
   const [gameId, setGameId] = useState('');
 
   const handleSubmit = () => {
-    if (gameId.length === 6) {
-      onJoin(gameId.toUpperCase());
+    if (gameId.length === 4) {
+      onJoin(gameId);
     }
   };
 
@@ -35,9 +36,11 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
       <CardContent className="space-y-6">
         <div className="flex justify-center">
           <InputOTP
-            maxLength={6}
+            maxLength={4}
             value={gameId}
-            onChange={(value) => setGameId(value.toUpperCase())}
+            pattern={REGEXP_ONLY_DIGITS}
+            inputMode="numeric"
+            onChange={(value) => setGameId(value)}
             disabled={isLoading}
             className="gap-2"
           >
@@ -46,8 +49,6 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
               <InputOTPSlot index={1} className="w-12 h-12 text-lg font-mono" />
               <InputOTPSlot index={2} className="w-12 h-12 text-lg font-mono" />
               <InputOTPSlot index={3} className="w-12 h-12 text-lg font-mono" />
-              <InputOTPSlot index={4} className="w-12 h-12 text-lg font-mono" />
-              <InputOTPSlot index={5} className="w-12 h-12 text-lg font-mono" />
             </InputOTPGroup>
           </InputOTP>
         </div>
@@ -55,7 +56,7 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
         <Button 
           onClick={handleSubmit}
           className="w-full" 
-          disabled={gameId.length !== 6 || isLoading}
+          disabled={gameId.length !== 4 || isLoading}
           size="lg"
         >
           {isLoading ? (

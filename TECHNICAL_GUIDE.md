@@ -472,8 +472,8 @@ export default function Error({ error, reset }: ErrorProps) {
 3. **Validation Errors**: Real-time feedback
    ```typescript
    // Invalid game code format
-   if (!/^[A-Z0-9]{6}$/.test(gameCode)) {
-     setErrorMessage("Game code must be 6 characters long")
+   if (!/^[0-9]{4}$/.test(gameCode)) {
+     setErrorMessage("Game code must be 4 characters long")
    }
    ```
 

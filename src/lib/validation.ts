@@ -10,7 +10,7 @@ export type ValidationResult<T = string> = {
 }
 
 /**
- * Validates a game code (6 characters, alphanumeric, uppercase)
+ * Validates a game code (4 characters, numeric)
  */
 export function validateGameCode(code: string | null | undefined): ValidationResult {
   if (!code || typeof code !== 'string') {
@@ -21,21 +21,21 @@ export function validateGameCode(code: string | null | undefined): ValidationRes
     }
   }
 
-  const trimmed = code.trim().toUpperCase()
+  const trimmed = code.trim()
 
-  if (trimmed.length !== 6) {
+  if (trimmed.length !== 4) {
     return {
       valid: false,
       value: null,
-      error: 'Game code must be exactly 6 characters',
+      error: 'Game code must be exactly 4 characters',
     }
   }
 
-  if (!/^[A-Z0-9]+$/.test(trimmed)) {
+  if (!/^[0-9]+$/.test(trimmed)) {
     return {
       valid: false,
       value: null,
-      error: 'Game code must contain only uppercase letters and numbers',
+      error: 'Game code must contain only numbers',
     }
   }
 

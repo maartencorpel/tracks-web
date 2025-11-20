@@ -119,7 +119,7 @@ After deploying:
 ## Questions?
 
 - The rate limiter allows 5 requests per minute per IP address
-- Game codes must be exactly 6 characters, uppercase letters and numbers only
+- Game codes must be exactly 4 characters, numbers only
 - The redirect URI allowlist prevents unauthorized redirects
 - All localStorage access is now safe and won't crash on server-side rendering
 

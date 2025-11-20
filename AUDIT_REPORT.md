@@ -109,16 +109,16 @@ export function useSafeLocalStorage(key: string) {
 **Location**: `src/app/page.tsx`, `src/components/game-code-input.tsx`
 
 **Issue**: Only basic length checks, no format validation or sanitization:
-- Game codes are only checked for length (6 characters)
-- No regex validation for alphanumeric format
+- Game codes are only checked for length (4 characters)
+- No regex validation for numeric format
 - No sanitization of user inputs
 - No validation on OAuth callback parameters
 
 **Current Code**:
 ```typescript
 // src/components/game-code-input.tsx:22
-if (gameId.length === 6) {
-  onJoin(gameId.toUpperCase());
+if (gameId.length === 4) {
+  onJoin(gameId);
 }
 ```
 
@@ -128,9 +128,8 @@ if (gameId.length === 6) {
 import { z } from 'zod'
 
 export const gameCodeSchema = z.string()
-  .length(6, 'Game code must be exactly 6 characters')
-  .regex(/^[A-Z0-9]+$/, 'Game code must contain only uppercase letters and numbers')
-  .transform(val => val.toUpperCase())
+  .length(4, 'Game code must be exactly 4 characters')
+  .regex(/^[0-9]+$/, 'Game code must contain only numbers')
 
 export function validateGameCode(code: string): { valid: boolean; error?: string } {
   try {
