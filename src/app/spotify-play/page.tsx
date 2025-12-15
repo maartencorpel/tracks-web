@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export default function SpotifyPlayPage() {
+// Separate component that uses useSearchParams
+function SpotifyPlayContent() {
   const searchParams = useSearchParams();
   const trackUrl = searchParams.get('trackUrl');
   const trackId = searchParams.get('trackId');
@@ -52,5 +53,34 @@ export default function SpotifyPlayPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function SpotifyPlayPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#1DB954] to-[#191414] text-white">
+        <div className="spinner mb-6"></div>
+        <h1 className="text-3xl font-bold mb-2">Loading...</h1>
+        
+        <style jsx>{`
+          .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #1DB954;
+            animation: spin 1s linear infinite;
+          }
+          
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    }>
+      <SpotifyPlayContent />
+    </Suspense>
   );
 }
