@@ -83,3 +83,29 @@ export const fetchSpotifyUser = async (accessToken: string) => {
 
   return response.json()
 }
+
+/**
+ * Refreshes an expired Spotify access token using a refresh token
+ * 
+ * This function calls our secure server-side API route that handles the token refresh.
+ * The client secret is kept secure on the server and never exposed to the client.
+ * 
+ * @param refreshToken - Spotify refresh token
+ * @returns Promise resolving to token response with new access_token and optionally new refresh_token
+ */
+export const refreshAccessToken = async (refreshToken: string) => {
+  const response = await fetch('/api/spotify/token/refresh', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ error: 'Failed to refresh token' }))
+    throw new Error(errorData.error || 'Failed to refresh access token')
+  }
+
+  return response.json()
+}

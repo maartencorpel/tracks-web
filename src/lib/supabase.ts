@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import { Game, GamePlayer, PlayerData } from '@/types'
+import { Game, GamePlayer, PlayerData, Question, PlayerAnswer, PlayerAnswerWithQuestion } from '@/types'
+import { MINIMUM_QUESTIONS } from '@/lib/constants'
 
 // Supabase configuration - these are safe to expose client-side
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -137,5 +138,290 @@ export class SupabaseService {
     
     // Convert to base64
     return Buffer.from(combined).toString('base64')
+  }
+
+  /**
+   * Decrypts a token using AES-GCM with game-specific key
+   * Reverses the encryption process used in encryptToken
+   * 
+   * @param gameId - Game ID used as decryption key
+   * @param encryptedToken - Base64-encoded encrypted token
+   * @returns Promise resolving to decrypted token string, or null if decryption fails
+   */
+  private static async decryptToken(gameId: string, encryptedToken: string): Promise<string | null> {
+    try {
+      // Decode base64 encrypted token
+      const combined = Buffer.from(encryptedToken, 'base64')
+      
+      // Extract nonce (first 12 bytes) and encrypted data (remaining bytes)
+      const nonce = combined.slice(0, 12)
+      const encrypted = combined.slice(12)
+      
+      // Generate decryption key from game ID using SHA-256
+      const encoder = new TextEncoder()
+      const decoder = new TextDecoder()
+      const gameIdData = encoder.encode(gameId)
+      const keyData = await crypto.subtle.digest('SHA-256', gameIdData)
+      
+      // Import the key for AES-GCM decryption
+      const key = await crypto.subtle.importKey(
+        'raw',
+        keyData,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['decrypt']
+      )
+      
+      // Decrypt using AES-GCM
+      const decrypted = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: nonce },
+        key,
+        encrypted
+      )
+      
+      // Convert decrypted data to string
+      return decoder.decode(decrypted)
+    } catch (error) {
+      console.error('Error decrypting token:', error)
+      return null
+    }
+  }
+
+  /**
+   * Gets the refresh token for a game player
+   * 
+   * Retrieves and decrypts the refresh token from the player_data table.
+   * Used for refreshing expired access tokens.
+   * 
+   * @param gamePlayerId - The game_player_id
+   * @param gameId - The game ID used for decryption
+   * @returns Promise resolving to refresh token if found, null otherwise
+   */
+  static async getRefreshToken(gamePlayerId: string, gameId: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('player_data')
+        .select('encrypted_refresh_token')
+        .eq('game_player_id', gamePlayerId)
+        .single()
+
+      if (error || !data || !data.encrypted_refresh_token) {
+        return null
+      }
+
+      // Decrypt the refresh token
+      const refreshToken = await this.decryptToken(gameId, data.encrypted_refresh_token)
+      return refreshToken
+    } catch (error) {
+      console.error('Error fetching refresh token:', error)
+      return null
+    }
+  }
+
+  /**
+   * Fetches all active questions ordered by display order
+   * 
+   * Used to display questions for player selection.
+   * 
+   * @returns Promise resolving to array of active questions, or empty array on error
+   */
+  static async getActiveQuestions(): Promise<Question[]> {
+    try {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+
+      if (error) {
+        console.error('Error fetching active questions:', error)
+        return []
+      }
+
+      return (data || []) as Question[]
+    } catch (error) {
+      console.error('Error fetching active questions:', error)
+      return []
+    }
+  }
+
+  /**
+   * Gets the game_player_id for a player in a specific game
+   * 
+   * Used to check if a player already exists in a game before checking answers.
+   * 
+   * @param gameId - 4-character game code
+   * @param spotifyUserId - Spotify user ID
+   * @returns Promise resolving to game_player_id if found, null otherwise
+   */
+  static async getGamePlayerId(gameId: string, spotifyUserId: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('game_players')
+        .select('id')
+        .eq('game_id', gameId)
+        .eq('spotify_user_id', spotifyUserId)
+        .single()
+
+      if (error || !data) {
+        return null
+      }
+
+      return data.id
+    } catch (error) {
+      console.error('Error fetching game player ID:', error)
+      return null
+    }
+  }
+
+  /**
+   * Fetches all answers for a player with question details
+   * 
+   * Used to display existing answers when player returns to update them.
+   * 
+   * @param gamePlayerId - The game_player_id to fetch answers for
+   * @returns Promise resolving to array of answers with question details, or empty array on error
+   */
+  static async getPlayerAnswers(gamePlayerId: string): Promise<PlayerAnswerWithQuestion[]> {
+    try {
+      const { data, error } = await supabase
+        .from('player_question_answers')
+        .select('*, questions(*)')
+        .eq('game_player_id', gamePlayerId)
+
+      if (error) {
+        console.error('Error fetching player answers:', error)
+        return []
+      }
+
+      return (data || []) as PlayerAnswerWithQuestion[]
+    } catch (error) {
+      console.error('Error fetching player answers:', error)
+      return []
+    }
+  }
+
+  /**
+   * Saves or updates a player's answer for a question
+   * 
+   * Uses UPSERT to handle both new answers and updates to existing answers.
+   * Extracts track metadata from Spotify track object.
+   * 
+   * @param gamePlayerId - The game_player_id
+   * @param questionId - The question_id
+   * @param track - Spotify track object from API
+   * @returns Promise resolving to success status and optional error message
+   */
+  static async saveAnswer(
+    gamePlayerId: string,
+    questionId: string,
+    track: {
+      id: string
+      name: string
+      artists: Array<{ name: string }>
+      album: {
+        name: string
+        images: Array<{ url: string }>
+        release_date: string
+      }
+      external_urls: { spotify: string }
+      preview_url: string | null
+    }
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Extract release year from release_date (format: YYYY-MM-DD or YYYY)
+      const releaseYear = track.album.release_date
+        ? track.album.release_date.substring(0, 4)
+        : null
+
+      const { error } = await supabase
+        .from('player_question_answers')
+        .upsert(
+          {
+            game_player_id: gamePlayerId,
+            question_id: questionId,
+            track_id: track.id,
+            track_name: track.name,
+            artist_name: track.artists[0]?.name || '',
+            album_name: track.album.name,
+            album_image_url: track.album.images[0]?.url || null,
+            release_year: releaseYear,
+            external_url: track.external_urls.spotify,
+            preview_url: track.preview_url || null,
+          },
+          {
+            onConflict: 'game_player_id,question_id',
+          }
+        )
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      return { success: true }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }
+    }
+  }
+
+  /**
+   * Checks if a player has the minimum required number of answers
+   * 
+   * Uses the Supabase RPC function to check readiness.
+   * 
+   * @param gamePlayerId - The game_player_id to check
+   * @returns Promise resolving to true if player has minimum answers, false otherwise
+   */
+  static async checkPlayerReadiness(gamePlayerId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase.rpc('player_has_minimum_answers', {
+        p_game_player_id: gamePlayerId,
+        p_minimum: MINIMUM_QUESTIONS,
+      })
+
+      if (error) {
+        console.error('Error checking player readiness:', error)
+        return false
+      }
+
+      return data === true
+    } catch (error) {
+      console.error('Error checking player readiness:', error)
+      return false
+    }
+  }
+
+  /**
+   * Deletes a player's answer for a question
+   * 
+   * @param gamePlayerId - The game_player_id
+   * @param questionId - The question_id to delete answer for
+   * @returns Promise resolving to success status and optional error message
+   */
+  static async deleteAnswer(
+    gamePlayerId: string,
+    questionId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase
+        .from('player_question_answers')
+        .delete()
+        .eq('game_player_id', gamePlayerId)
+        .eq('question_id', questionId)
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      return { success: true }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }
+    }
   }
 }

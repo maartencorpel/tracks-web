@@ -65,3 +65,32 @@ export interface AnalyticsEvent {
   properties?: Record<string, any>;
   timestamp?: number;
 }
+
+export interface Question {
+  id: string;
+  question_text: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlayerAnswer {
+  id: string;
+  game_player_id: string;
+  question_id: string;
+  track_id: string;
+  track_name: string;
+  artist_name: string;
+  album_name: string;
+  album_image_url: string | null;
+  release_year: string | null;
+  external_url: string;
+  preview_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlayerAnswerWithQuestion extends PlayerAnswer {
+  questions: Question;
+}

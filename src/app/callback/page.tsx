@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ProgressSteps } from '@/components/progress-steps';
 import { SupabaseService } from '@/lib/supabase';
 import { exchangeCodeForToken, fetchSpotifyUser, SPOTIFY_REDIRECT_URI } from '@/lib/spotify';
-import { browserStorage, PENDING_GAME_ID_KEY } from '@/lib/browser-storage';
+import { browserStorage, PENDING_GAME_ID_KEY, sessionStorage, SPOTIFY_ACCESS_TOKEN_KEY } from '@/lib/browser-storage';
 import { validateGameCode, validateSpotifyCode } from '@/lib/validation';
 import { trackPageView, trackOAuthEvent, trackGameEvent, trackError } from '@/lib/analytics';
 import { SpotifyUser } from '@/types';
@@ -17,7 +17,7 @@ import { SpotifyUser } from '@/types';
  * 
  * This page handles the OAuth callback from Spotify after user authorization.
  * It processes the authorization code, exchanges it for tokens, fetches user data,
- * and adds the player to the game in Supabase.
+ * adds the player to the game in Supabase, and routes them to the appropriate screen.
  * 
  * OAuth Flow:
  * 1. User clicks "Join with Spotify" on main page
@@ -25,11 +25,14 @@ import { SpotifyUser } from '@/types';
  * 3. Spotify redirects back to this page with authorization code
  * 4. This page exchanges code for access/refresh tokens
  * 5. Fetches Spotify user profile
- * 6. Adds player to game in Supabase
- * 7. Redirects to success page
+ * 6. Checks if player exists, joins game if needed
+ * 7. Checks for existing answers
+ * 8. Stores access token in sessionStorage
+ * 9. Redirects to /questions (new player) or /update-answers (returning player)
  */
 function CallbackPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [status, setStatus] = useState('Processing authentication...');
   const [isLoading, setIsLoading] = useState(true);
@@ -64,7 +67,7 @@ function CallbackPageContent() {
   /**
    * Updates the progress indicator and status message
    * 
-   * @param step - Current step number (1-4)
+   * @param step - Current step number (1-5)
    * @param statusMessage - Status message to display
    */
   const updateProgress = (step: number, statusMessage: string) => {
@@ -96,8 +99,10 @@ function CallbackPageContent() {
    * 1. Validating URL parameters and game ID
    * 2. Exchanging authorization code for access/refresh tokens
    * 3. Fetching Spotify user profile
-   * 4. Adding player to game in Supabase
-   * 5. Redirecting to success page
+   * 4. Checking if player exists, joining game if needed
+   * 5. Checking for existing answers
+   * 6. Storing access token in sessionStorage
+   * 7. Redirecting to question selection or update answers page
    */
   const handleCallback = async () => {
     try {
@@ -149,33 +154,86 @@ function CallbackPageContent() {
       const userData: SpotifyUser = await fetchSpotifyUser(tokenData.access_token);
       log(`User: ${userData.display_name}`);
 
-      updateProgress(4, 'Joining game...');
-      log(`Joining game ${gameId}`);
+      // Check if player already exists in this game
+      let gamePlayerId = await SupabaseService.getGamePlayerId(gameId, userData.id);
+      
+      if (!gamePlayerId) {
+        // Player doesn't exist, join the game
+        updateProgress(4, 'Joining game...');
+        log(`Joining game ${gameId}`);
 
-      // Join the game
-      const result = await SupabaseService.joinGame(
-        gameId,
-        userData,
-        tokenData.access_token,
-        tokenData.refresh_token
-      );
+        const result = await SupabaseService.joinGame(
+          gameId,
+          userData,
+          tokenData.access_token,
+          tokenData.refresh_token
+        );
 
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to join game');
+        if (!result.success) {
+          // Check if error is due to duplicate player (race condition)
+          if (result.error?.includes('duplicate') || result.error?.includes('unique')) {
+            log('Player already exists, fetching game player ID...');
+            gamePlayerId = await SupabaseService.getGamePlayerId(gameId, userData.id);
+            if (!gamePlayerId) {
+              throw new Error('Failed to get game player ID after duplicate error');
+            }
+          } else {
+            throw new Error(result.error || 'Failed to join game');
+          }
+        } else {
+          // Get game player ID after successful join
+          gamePlayerId = await SupabaseService.getGamePlayerId(gameId, userData.id);
+          if (!gamePlayerId) {
+            throw new Error('Failed to get game player ID after joining game');
+          }
+        }
+
+        log('Successfully joined game');
+        
+        // Track successful join
+        trackGameEvent('game_join_success', gameId, {
+          user_id: userData.id,
+          user_name: userData.display_name
+        });
+      } else {
+        log('Player already exists in game');
       }
 
-      log('Successfully joined game');
+      // Check for existing answers
+      updateProgress(4, 'Checking your answers...');
+      log('Checking for existing answers');
       
-      // Track successful join
-      trackGameEvent('game_join_success', gameId, {
-        user_id: userData.id,
-        user_name: userData.display_name
-      });
+      const existingAnswers = await SupabaseService.getPlayerAnswers(gamePlayerId);
+      const hasAnswers = existingAnswers.length > 0;
       
+<<<<<<< HEAD
       showSuccess(`Welcome to the game, ${userData.display_name}! You can close this window and return to the Tracks app.`);
+=======
+      log(`Found ${existingAnswers.length} existing answers`);
+
+      // Store access token in sessionStorage for Spotify API calls
+      try {
+        sessionStorage.set(SPOTIFY_ACCESS_TOKEN_KEY, tokenData.access_token);
+        log('Access token stored in sessionStorage');
+      } catch (storageError) {
+        log('Warning: Failed to store access token in sessionStorage', true);
+        // Continue anyway - token might still work
+      }
+>>>>>>> 15e440f1 (Implement critical fixes and medium/low priority improvements)
 
       // Clear stored game ID
       browserStorage.remove(PENDING_GAME_ID_KEY);
+
+      // Redirect based on whether answers exist
+      updateProgress(5, 'Redirecting...');
+      log(`Redirecting to ${hasAnswers ? 'update-answers' : 'questions'}`);
+
+      const redirectPath = hasAnswers 
+        ? `/update-answers?gameId=${gameId}`
+        : `/questions?gameId=${gameId}`;
+
+      // Use router.push for client-side navigation
+      router.push(redirectPath);
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -199,12 +257,13 @@ function CallbackPageContent() {
           {/* Progress Steps */}
           <ProgressSteps 
             currentStep={currentStep} 
-            totalSteps={4}
+            totalSteps={5}
             stepLabels={[
               'Verifying game...',
               'Exchanging code for token...',
               'Fetching your Spotify profile...',
-              'Joining game...'
+              'Checking your answers...',
+              'Redirecting...'
             ]}
           />
           
