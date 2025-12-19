@@ -1,7 +1,7 @@
 # Mobile Authentication Site - Audit Report
 
 **Date**: 2025-01-27  
-**Scope**: Complete audit of the mobile authentication website for Spot game join flow
+**Scope**: Complete audit of the mobile authentication website for Tracks game join flow
 
 ---
 
@@ -444,7 +444,7 @@ const securityHeaders = [
 ## 📝 Notes
 
 - **Encryption**: The encryption implementation is correct and matches iOS. The IMPROVEMENTS.md document is outdated on this point.
-- **GitHub**: Already connected to `https://github.com/maartencorpel/spot-join-web.git`
+- **GitHub**: Already connected to `https://github.com/maartencorpel/tracks-match.git`
 - **Dependencies**: All dependencies are up to date and appropriate
 - **Code Quality**: Overall code quality is good, just needs the enhancements listed above
 

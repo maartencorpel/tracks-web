@@ -39,7 +39,7 @@ function SuccessPageContent() {
     
     // If that doesn't work, show a message
     setTimeout(() => {
-      alert('You can now close this tab and return to the Spot app.');
+      alert('You can now close this tab and return to the Tracks app.');
     }, 100);
   };
 

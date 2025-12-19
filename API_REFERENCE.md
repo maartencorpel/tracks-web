@@ -1,4 +1,4 @@
-# Spot Join - API Reference
+# Tracks Match - API Reference
 
 ## Table of Contents
 
@@ -234,7 +234,7 @@ NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=http://localhost:3000/callback
 
 **Production:**
 ```env
-NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=https://spot-join-web.vercel.app/callback
+NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=https://tracks-match.vercel.app/callback
 ```
 
 ### Security Considerations
@@ -436,4 +436,4 @@ export function rateLimit(
 
 ---
 
-This API reference provides comprehensive documentation for all endpoints, integrations, and data models used in the Spot Join web application. For implementation details, refer to the source code and technical guide.
+This API reference provides comprehensive documentation for all endpoints, integrations, and data models used in the Tracks Match web application. For implementation details, refer to the source code and technical guide.

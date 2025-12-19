@@ -16,7 +16,7 @@ function SpotifyPlayContent() {
       
       // After 3 seconds, redirect back to app via universal link
       setTimeout(() => {
-        window.location.href = `https://spot-join-web.vercel.app/return?trackId=${trackId || ''}`;
+        window.location.href = `https://tracks-match.vercel.app/return?trackId=${trackId || ''}`;
       }, 3000);
     }
   }, [trackUrl, trackId]);

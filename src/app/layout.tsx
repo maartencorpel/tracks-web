@@ -5,13 +5,13 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Join Spot Game",
-  description: "Connect with friends and discover music together in Spot games",
-  keywords: ["Spot", "Spotify", "Music", "Game", "Social"],
-  authors: [{ name: "Spot Team" }],
+  title: "Join Tracks Game",
+  description: "Connect with friends and discover music together in Tracks games",
+  keywords: ["Tracks", "Spotify", "Music", "Game", "Social"],
+  authors: [{ name: "Tracks Team" }],
   robots: "noindex, nofollow", // Prevent indexing of join pages
   openGraph: {
-    title: "Join Spot Game",
+    title: "Join Tracks Game",
     description: "Connect with friends and discover music together",
     type: "website",
   },

@@ -1,6 +1,6 @@
-# Spot Join Website
+# Tracks Match Website
 
-A modern Next.js website for joining Spot games. This website allows users to join Spotify-based music guessing games through a web interface with OAuth authentication.
+A modern Next.js website for joining Tracks games. This website allows users to join Spotify-based music guessing games through a web interface with OAuth authentication.
 
 ## 🚀 Features
 
@@ -89,8 +89,8 @@ src/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/maartencorpel/spot-join-web.git
-   cd spot-join-nextjs
+   git clone https://github.com/maartencorpel/tracks-match.git
+   cd tracks-web
    ```
 
 2. **Install dependencies**
@@ -161,7 +161,7 @@ SPOTIFY_REDIRECT_URI_ALLOWLIST=https://your-domain.com/callback,https://staging.
 ## 🔗 Integration
 
 This website integrates with:
-- **iOS App**: Deep linking support (`spot://join?game=ABC123`)
+- **iOS App**: Deep linking support (`tracks://join?game=ABC123`)
 - **Spotify API**: User authentication and data access
 - **Supabase**: Game state and player management
 
@@ -232,4 +232,4 @@ npm run lint     # Run ESLint
 
 ## 📄 License
 
-This project is part of the Spot game ecosystem.
+This project is part of the Tracks game ecosystem.

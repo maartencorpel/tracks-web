@@ -172,7 +172,7 @@ function CallbackPageContent() {
         user_name: userData.display_name
       });
       
-      showSuccess(`Welcome to the game, ${userData.display_name}! You can close this window and return to the Spot app.`);
+      showSuccess(`Welcome to the game, ${userData.display_name}! You can close this window and return to the Tracks app.`);
 
       // Clear stored game ID
       browserStorage.remove(PENDING_GAME_ID_KEY);

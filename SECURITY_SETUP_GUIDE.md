@@ -16,7 +16,7 @@ I've added security improvements to your mobile authentication website. Here's w
 
 All the code changes are ready. You can see them with:
 ```bash
-cd spot-join-nextjs
+cd tracks-web
 git status
 ```
 
@@ -24,7 +24,7 @@ git status
 
 1. Make sure you're in the project folder:
    ```bash
-   cd spot-join-nextjs
+   cd tracks-web
    ```
 
 2. Install dependencies (if you haven't recently):
@@ -56,7 +56,7 @@ You need to add one new environment variable for production:
    - **Environment**: Production (and Preview if you want)
 
 **For Local Development:**
-Create or update `.env.local` file in the `spot-join-nextjs` folder:
+Create or update `.env.local` file in the `tracks-web` folder:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key

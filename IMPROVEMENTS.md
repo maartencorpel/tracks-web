@@ -1,4 +1,4 @@
-# Spot Join - Improvements & Enhancement Recommendations
+# Tracks Match - Improvements & Enhancement Recommendations
 
 ## Table of Contents
 
@@ -42,7 +42,7 @@ const ALGORITHM = 'aes-256-gcm'
 export function encryptToken(token: string): { encrypted: string; iv: string; tag: string } {
   const iv = crypto.randomBytes(16)
   const cipher = crypto.createCipher(ALGORITHM, ENCRYPTION_KEY)
-  cipher.setAAD(Buffer.from('spot-token'))
+  cipher.setAAD(Buffer.from('tracks-token'))
   
   let encrypted = cipher.update(token, 'utf8', 'hex')
   encrypted += cipher.final('hex')
@@ -58,7 +58,7 @@ export function encryptToken(token: string): { encrypted: string; iv: string; ta
 
 export function decryptToken(encrypted: string, iv: string, tag: string): string {
   const decipher = crypto.createDecipher(ALGORITHM, ENCRYPTION_KEY)
-  decipher.setAAD(Buffer.from('spot-token'))
+  decipher.setAAD(Buffer.from('tracks-token'))
   decipher.setAuthTag(Buffer.from(tag, 'hex'))
   
   let decrypted = decipher.update(encrypted, 'hex', 'utf8')
@@ -938,4 +938,4 @@ export async function checkGameExistsCached(gameId: string): Promise<Game | null
 
 ---
 
-This comprehensive improvement plan provides a structured approach to enhancing the Spot Join web application across security, user experience, features, and code quality dimensions. Prioritize based on business impact and technical risk.
+This comprehensive improvement plan provides a structured approach to enhancing the Tracks Match web application across security, user experience, features, and code quality dimensions. Prioritize based on business impact and technical risk.

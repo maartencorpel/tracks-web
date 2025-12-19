@@ -51,12 +51,12 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Custom colors for Spot theme
+        // Custom colors for Tracks theme
         spotify: {
           green: "#1DB954",
           "green-dark": "#1ed760",
         },
-        spot: {
+        tracks: {
           purple: "#667eea",
           "purple-dark": "#5568d3",
         },

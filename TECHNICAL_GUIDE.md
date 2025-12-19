@@ -1,4 +1,4 @@
-# Spot Join - Technical Guide
+# Tracks Match - Technical Guide
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@
 
 ## Architecture Overview
 
-The Spot Join web app is built as a **single-page application** using Next.js 15 with the App Router pattern. It serves as a web-based entry point for users to join Spotify music guessing games created on the iOS app.
+The Tracks Match web app is built as a **single-page application** using Next.js 15 with the App Router pattern. It serves as a web-based entry point for users to join Spotify music guessing games created on the iOS app.
 
 ### Core Principles
 
@@ -373,7 +373,7 @@ The app uses **always-on dark mode** with CSS variables:
   --card-foreground: 210 40% 98%;    /* Same as foreground */
   --primary: 142 76% 36%;            /* Spotify green */
   --primary-foreground: 355.7 100% 97.3%;
-  --secondary: 252 100% 67%;         /* Spot purple */
+  --secondary: 252 100% 67%;         /* Tracks purple */
   --muted: 217.2 32.6% 17.5%;        /* Muted slate */
   --muted-foreground: 215 20.2% 65.1%;
   --border: 217.2 32.6% 17.5%;       /* Subtle borders */
@@ -631,7 +631,7 @@ npm run lint
 ### Environment Setup
 
 1. **Development**: `http://localhost:3000`
-2. **Production**: `https://spot-join-web.vercel.app`
+2. **Production**: `https://tracks-match.vercel.app`
 3. **Environment Variables**: Copy `.env.example` to `.env.local`
 
 ### Code Quality
@@ -671,9 +671,9 @@ vercel --prod
 NEXT_PUBLIC_SUPABASE_URL=https://irpkbppodhjvytbyluud.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_production_key
 NEXT_PUBLIC_SPOTIFY_CLIENT_ID=530bf2b1f07841b8837a54b15bf6b64d
-NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=https://spot-join-web.vercel.app/callback
+NEXT_PUBLIC_SPOTIFY_REDIRECT_URI=https://tracks-match.vercel.app/callback
 SPOTIFY_CLIENT_SECRET=your_production_secret
-SPOTIFY_REDIRECT_URI_ALLOWLIST=https://spot-join-web.vercel.app/callback
+SPOTIFY_REDIRECT_URI_ALLOWLIST=https://tracks-match.vercel.app/callback
 ```
 
 ### Monitoring & Observability
@@ -685,4 +685,4 @@ SPOTIFY_REDIRECT_URI_ALLOWLIST=https://spot-join-web.vercel.app/callback
 
 ---
 
-This technical guide provides a comprehensive overview of the Spot Join web application architecture, implementation details, and development practices. For specific implementation details, refer to the source code and inline comments.
+This technical guide provides a comprehensive overview of the Tracks Match web application architecture, implementation details, and development practices. For specific implementation details, refer to the source code and inline comments.
