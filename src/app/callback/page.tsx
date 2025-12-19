@@ -206,9 +206,6 @@ function CallbackPageContent() {
       const existingAnswers = await SupabaseService.getPlayerAnswers(gamePlayerId);
       const hasAnswers = existingAnswers.length > 0;
       
-<<<<<<< HEAD
-      showSuccess(`Welcome to the game, ${userData.display_name}! You can close this window and return to the Tracks app.`);
-=======
       log(`Found ${existingAnswers.length} existing answers`);
 
       // Store access token in sessionStorage for Spotify API calls
@@ -219,7 +216,6 @@ function CallbackPageContent() {
         log('Warning: Failed to store access token in sessionStorage', true);
         // Continue anyway - token might still work
       }
->>>>>>> 15e440f1 (Implement critical fixes and medium/low priority improvements)
 
       // Clear stored game ID
       browserStorage.remove(PENDING_GAME_ID_KEY);
