@@ -211,11 +211,17 @@ function CallbackPageContent() {
       // Extract tracks
       updateProgress(5, 'Extracting your tracks...');
       log('Extracting tracks from Spotify');
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'callback/page.tsx:212',message:'callback extraction start',data:{gamePlayerId,hasAccessToken:!!tokenData.access_token},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       try {
         const extractionResult = await SupabaseService.extractPlayerTracks(
           gamePlayerId,
           tokenData.access_token
         );
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'callback/page.tsx:219',message:'callback extraction result',data:{success:extractionResult.success,count:extractionResult.count,error:extractionResult.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         if (extractionResult.success) {
           log(`Extracted ${extractionResult.count} tracks`);
         } else {
@@ -223,6 +229,9 @@ function CallbackPageContent() {
         }
       } catch (extractionError) {
         const extractionErrorMessage = extractionError instanceof Error ? extractionError.message : 'Unknown error';
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'callback/page.tsx:225',message:'callback extraction exception',data:{error:extractionErrorMessage},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         log(`Warning: Track extraction error: ${extractionErrorMessage}`, true);
         // Continue anyway - extraction can happen later if needed
       }

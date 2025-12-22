@@ -442,12 +442,21 @@ export class SupabaseService {
     gamePlayerId: string,
     accessToken: string
   ): Promise<{ success: boolean; count: number; error?: string }> {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:441',message:'extractPlayerTracks entry',data:{gamePlayerId,hasAccessToken:!!accessToken},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     try {
       // Fetch saved tracks (up to 50)
       const savedTracks = await fetchSavedTracks(accessToken, 50)
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:447',message:'savedTracks fetched',data:{savedTracksCount:savedTracks.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
 
       // Fetch top tracks (up to 100)
       const topTracks = await fetchTopTracks(accessToken, 100)
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:450',message:'topTracks fetched',data:{topTracksCount:topTracks.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
 
       // Combine and deduplicate by track ID (keep first occurrence)
       const allTracks = [
@@ -463,6 +472,9 @@ export class SupabaseService {
       const pastYearTracks = uniqueTracks.filter((item) =>
         isTrackFromPastYear(item.track)
       )
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:463',message:'tracks filtered to past year',data:{uniqueTracksCount:uniqueTracks.length,pastYearTracksCount:pastYearTracks.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
 
       // Delete existing tracks for this player (always refresh)
       const { error: deleteError } = await supabase
@@ -480,9 +492,15 @@ export class SupabaseService {
 
       // Store in database
       await this.storeExtractedTracks(gamePlayerId, pastYearTracks)
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:482',message:'tracks stored successfully',data:{count:pastYearTracks.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
 
       return { success: true, count: pastYearTracks.length }
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:486',message:'extractPlayerTracks error',data:{error:error instanceof Error ? error.message : 'Unknown error'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       return {
         success: false,
         count: 0,
@@ -498,6 +516,9 @@ export class SupabaseService {
    * @returns Promise resolving to array of Spotify tracks, or empty array if none found
    */
   static async getExtractedTracks(gamePlayerId: string): Promise<SpotifyTrack[]> {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:500',message:'getExtractedTracks entry',data:{gamePlayerId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     try {
       const { data, error } = await supabase
         .from('extracted_tracks')
@@ -505,16 +526,22 @@ export class SupabaseService {
         .eq('game_player_id', gamePlayerId)
 
       if (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:507',message:'getExtractedTracks query error',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         console.error('Error fetching extracted tracks:', error)
         return []
       }
 
       if (!data || data.length === 0) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:512',message:'getExtractedTracks empty result',data:{dataLength:data?.length || 0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         return []
       }
 
       // Convert database records to SpotifyTrack format
-      return data.map((record) => ({
+      const tracks = data.map((record) => ({
         id: record.track_id,
         name: record.track_name,
         artists: [{ name: record.artist_name }],
@@ -526,7 +553,14 @@ export class SupabaseService {
         external_urls: { spotify: record.external_url },
         preview_url: record.preview_url || null,
       }))
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:528',message:'getExtractedTracks success',data:{tracksCount:tracks.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
+      return tracks
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:530',message:'getExtractedTracks exception',data:{error:error instanceof Error ? error.message : 'Unknown error'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       console.error('Error fetching extracted tracks:', error)
       return []
     }

@@ -132,19 +132,34 @@ function TracksPageContent() {
 
       // Load extracted tracks
       let tracks = await SupabaseService.getExtractedTracks(playerId);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tracks/page.tsx:134',message:'initial tracks loaded',data:{tracksCount:tracks.length,playerId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       
       // If no tracks found, extract them on-the-fly
       if (tracks.length === 0 && token) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tracks/page.tsx:137',message:'no tracks found, extracting',data:{hasToken:!!token},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         setIsExtractingTracks(true);
         try {
           const extractionResult = await SupabaseService.extractPlayerTracks(
             playerId,
             token
           );
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tracks/page.tsx:144',message:'extraction result',data:{success:extractionResult.success,count:extractionResult.count,error:extractionResult.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
           if (extractionResult.success) {
             tracks = await SupabaseService.getExtractedTracks(playerId);
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tracks/page.tsx:146',message:'tracks reloaded after extraction',data:{tracksCount:tracks.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
           }
         } catch (extractionError) {
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tracks/page.tsx:148',message:'extraction error caught',data:{error:extractionError instanceof Error ? extractionError.message : 'Unknown error'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
           console.error('Failed to extract tracks:', extractionError);
           // Continue anyway - user can still use custom track input
         } finally {
@@ -153,6 +168,9 @@ function TracksPageContent() {
       }
       
       setExtractedTracks(tracks);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'tracks/page.tsx:155',message:'setExtractedTracks called',data:{tracksCount:tracks.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
 
       // Fetch existing answers
       const existingAnswers = await SupabaseService.getPlayerAnswers(playerId);
