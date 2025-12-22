@@ -224,19 +224,77 @@ function TracksPageContent() {
     return newAccessToken;
   }, [gameId, gamePlayerId]);
 
-  const handleSlotQuestionChange = useCallback((slotIndex: number, questionId: string) => {
+  const handleSlotQuestionChange = useCallback(async (slotIndex: number, questionId: string) => {
+    const slot = slots[slotIndex];
+    const hasTrack = slot.track !== null;
+    const oldQuestionId = slot.questionId;
+    
+    // Update question ID optimistically
     setSlots((prev) => {
       const newSlots = [...prev];
-      newSlots[slotIndex] = { ...newSlots[slotIndex], questionId, track: null };
+      newSlots[slotIndex] = { ...newSlots[slotIndex], questionId };
       return newSlots;
     });
+    
     // Hide custom input when question changes
     setShowCustomInput((prev) => {
       const newState = { ...prev };
       delete newState[slotIndex];
       return newState;
     });
-  }, []);
+    
+    // If track exists, save it to the new question
+    if (hasTrack && slot.track && gamePlayerId) {
+      setSavingStates((prev) => ({ ...prev, [slotIndex]: true }));
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[slotIndex];
+        return newErrors;
+      });
+      
+      try {
+        const result = await SupabaseService.saveAnswer(
+          gamePlayerId,
+          questionId,
+          slot.track
+        );
+        
+        if (!result.success) {
+          // Revert question change on error
+          setSlots((prev) => {
+            const newSlots = [...prev];
+            newSlots[slotIndex] = { ...newSlots[slotIndex], questionId: oldQuestionId };
+            return newSlots;
+          });
+          setErrors((prev) => ({
+            ...prev,
+            [slotIndex]: result.error || 'Failed to update question',
+          }));
+        }
+      } catch (error) {
+        // Revert question change on error
+        setSlots((prev) => {
+          const newSlots = [...prev];
+          newSlots[slotIndex] = { ...newSlots[slotIndex], questionId: oldQuestionId };
+          return newSlots;
+        });
+        const errorMessage = error instanceof Error ? error.message : 'Failed to update question';
+        setErrors((prev) => ({
+          ...prev,
+          [slotIndex]: errorMessage,
+        }));
+      } finally {
+        setSavingStates((prev) => ({ ...prev, [slotIndex]: false }));
+      }
+    } else {
+      // If no track, clear the track (existing behavior)
+      setSlots((prev) => {
+        const newSlots = [...prev];
+        newSlots[slotIndex] = { ...newSlots[slotIndex], track: null };
+        return newSlots;
+      });
+    }
+  }, [slots, gamePlayerId]);
 
   const handleSlotTrackSelect = useCallback(
     async (slotIndex: number, track: SpotifyTrack, isCustomTrack: boolean = false) => {
@@ -459,7 +517,7 @@ function TracksPageContent() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {!question && !isSlot1 && (
+                  {!isSlot1 && (
                     <QuestionDropdown
                       questions={allQuestions}
                       selectedQuestionId={slot.questionId}
@@ -469,75 +527,77 @@ function TracksPageContent() {
                     />
                   )}
 
-                  {question && !selectedTrack && (
+                  {question && (
                     <>
-                      {showCustom ? (
-                        accessToken && (
-                          <CustomTrackInput
-                            onTrackFound={(track) => handleCustomTrackAdd(slotIndex, track)}
-                            onCancel={() => {
-                              setShowCustomInput((prev) => {
-                                const newState = { ...prev };
-                                delete newState[slotIndex];
-                                return newState;
-                              });
-                            }}
-                            accessToken={accessToken}
-                            error={slotError}
-                          />
-                        )
-                      ) : (
+                      {!selectedTrack ? (
                         <>
-                          <TrackList
-                            tracks={getFilteredTracks(slotIndex)}
-                            selectedTrackId={null}
-                            onSelectTrack={(track) => handleSlotTrackSelect(slotIndex, track)}
-                            isLoading={isExtractingTracks}
-                            error={slotError}
+                          {showCustom ? (
+                            accessToken && (
+                              <CustomTrackInput
+                                onTrackFound={(track) => handleCustomTrackAdd(slotIndex, track)}
+                                onCancel={() => {
+                                  setShowCustomInput((prev) => {
+                                    const newState = { ...prev };
+                                    delete newState[slotIndex];
+                                    return newState;
+                                  });
+                                }}
+                                accessToken={accessToken}
+                                error={slotError}
+                              />
+                            )
+                          ) : (
+                            <>
+                              <TrackList
+                                tracks={getFilteredTracks(slotIndex)}
+                                selectedTrackId={null}
+                                onSelectTrack={(track) => handleSlotTrackSelect(slotIndex, track)}
+                                isLoading={isExtractingTracks}
+                                error={slotError}
+                              />
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setShowCustomInput((prev) => ({ ...prev, [slotIndex]: true }));
+                                  setErrors((prev) => {
+                                    const newErrors = { ...prev };
+                                    delete newErrors[slotIndex];
+                                    return newErrors;
+                                  });
+                                }}
+                                className="w-full mt-2"
+                              >
+                                Can't find your track? Add custom track
+                              </Button>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <div className="space-y-2">
+                          <TrackCard
+                            track={selectedTrack}
+                            onSelect={() => {}}
+                            isSelected={true}
+                            isLoading={isSaving}
                           />
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              setShowCustomInput((prev) => ({ ...prev, [slotIndex]: true }));
-                              setErrors((prev) => {
-                                const newErrors = { ...prev };
-                                delete newErrors[slotIndex];
-                                return newErrors;
+                              setSlots((prev) => {
+                                const newSlots = [...prev];
+                                newSlots[slotIndex] = { ...newSlots[slotIndex], track: null };
+                                return newSlots;
                               });
                             }}
-                            className="w-full mt-2"
+                            disabled={isSaving}
                           >
-                            Can't find your track? Add custom track
+                            Change Selection
                           </Button>
-                        </>
+                        </div>
                       )}
                     </>
-                  )}
-
-                  {selectedTrack && question && (
-                    <div className="space-y-2">
-                      <TrackCard
-                        track={selectedTrack}
-                        onSelect={() => {}}
-                        isSelected={true}
-                        isLoading={isSaving}
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSlots((prev) => {
-                            const newSlots = [...prev];
-                            newSlots[slotIndex] = { ...newSlots[slotIndex], track: null };
-                            return newSlots;
-                          });
-                        }}
-                        disabled={isSaving}
-                      >
-                        Change Selection
-                      </Button>
-                    </div>
                   )}
                 </CardContent>
               </Card>

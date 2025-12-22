@@ -126,6 +126,7 @@ export function CustomTrackInput({
                 track={fetchedTrack}
                 onSelect={() => {}}
                 isSelected={false}
+                hideSelectButton={true}
               />
             </div>
             <div className="flex gap-2">

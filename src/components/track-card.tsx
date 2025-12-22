@@ -12,6 +12,7 @@ interface TrackCardProps {
   onSelect: (track: SpotifyTrack) => void;
   isSelected?: boolean;
   isLoading?: boolean;
+  hideSelectButton?: boolean;
 }
 
 function TrackCardComponent({
@@ -19,6 +20,7 @@ function TrackCardComponent({
   onSelect,
   isSelected = false,
   isLoading = false,
+  hideSelectButton = false,
 }: TrackCardProps) {
   const albumImage = track.album.images?.[0]?.url || null;
   const artistNames = track.artists.map((a) => a.name).join(', ');
@@ -99,20 +101,22 @@ function TrackCardComponent({
                 <ExternalLink className="w-4 h-4" />
               </a>
             )}
-            <Button
-              onClick={handleSelect}
-              disabled={isLoading || isSelected}
-              size="sm"
-              variant={isSelected ? 'secondary' : 'default'}
-            >
-              {isLoading ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              ) : isSelected ? (
-                'Selected'
-              ) : (
-                'Select'
-              )}
-            </Button>
+            {!hideSelectButton && (
+              <Button
+                onClick={handleSelect}
+                disabled={isLoading || isSelected}
+                size="sm"
+                variant={isSelected ? 'secondary' : 'default'}
+              >
+                {isLoading ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : isSelected ? (
+                  'Selected'
+                ) : (
+                  'Select'
+                )}
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>

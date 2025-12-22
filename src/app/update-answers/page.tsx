@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AnswerSummary } from '@/components/answer-summary';
 import { QuestionSelector } from '@/components/question-selector';
+import { QuestionDropdown } from '@/components/question-dropdown';
 import { TrackList } from '@/components/track-list';
 import { CustomTrackInput } from '@/components/custom-track-input';
 import { TrackCard } from '@/components/track-card';
@@ -266,6 +267,68 @@ function UpdateAnswersPageContent() {
     [handleSelectTrack]
   );
 
+  const handleQuestionChange = useCallback(
+    async (questionId: string, newQuestionId: string) => {
+      const track = answers[questionId];
+      if (!track || !gamePlayerId) {
+        return;
+      }
+
+      // Prevent selecting a question that's already answered
+      if (answeredQuestionIds.includes(newQuestionId)) {
+        setErrors((prev) => ({
+          ...prev,
+          [questionId]: 'This question is already answered. Please select a different question.',
+        }));
+        return;
+      }
+
+      setSavingStates((prev) => ({ ...prev, [questionId]: true }));
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[questionId];
+        return newErrors;
+      });
+
+      try {
+        // Delete old answer
+        const deleteResult = await SupabaseService.deleteAnswer(gamePlayerId, questionId);
+        if (!deleteResult.success) {
+          throw new Error(deleteResult.error || 'Failed to delete old answer');
+        }
+
+        // Save to new question
+        const saveResult = await SupabaseService.saveAnswer(gamePlayerId, newQuestionId, track);
+        if (!saveResult.success) {
+          throw new Error(saveResult.error || 'Failed to save answer to new question');
+        }
+
+        // Update state
+        setAnswers((prev) => {
+          const newAnswers = { ...prev };
+          delete newAnswers[questionId];
+          newAnswers[newQuestionId] = track;
+          return newAnswers;
+        });
+        setAnsweredQuestionIds((prev) => {
+          const newIds = prev.filter((id) => id !== questionId);
+          return [...newIds, newQuestionId];
+        });
+
+        // Re-check readiness
+        const ready = await SupabaseService.checkPlayerReadiness(gamePlayerId);
+        setIsReady(ready);
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to update question';
+        setErrors((prev) => ({ ...prev, [questionId]: errorMessage }));
+      } finally {
+        setSavingStates((prev) => ({ ...prev, [questionId]: false }));
+      }
+    },
+    [answers, gamePlayerId, answeredQuestionIds]
+  );
+
   const handleRemoveQuestion = useCallback(
     async (questionId: string) => {
       if (!gamePlayerId) {
@@ -419,8 +482,15 @@ function UpdateAnswersPageContent() {
                   <Card key={questionId} className={cn(selectedTrack && 'border-primary/50')}>
                     <CardHeader>
                       <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <CardTitle className="text-lg">{question.question_text}</CardTitle>
+                        <div className="flex-1 space-y-2">
+                          <QuestionDropdown
+                            questions={allQuestions}
+                            selectedQuestionId={questionId}
+                            excludedQuestionIds={answeredQuestionIds.filter((id) => id !== questionId)}
+                            onSelect={(newQuestionId) => handleQuestionChange(questionId, newQuestionId)}
+                            placeholder="Select a question..."
+                            disabled={isSaving || isDeletingQuestion || isChanging}
+                          />
                           {selectedTrack && !isChanging && (
                             <CardDescription className="mt-2">
                               Selected: <span className="font-medium">{selectedTrack.name}</span> by{' '}
