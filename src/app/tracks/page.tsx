@@ -6,9 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { TrackList } from '@/components/track-list';
-import { CustomTrackInput } from '@/components/custom-track-input';
-import { TrackCard } from '@/components/track-card';
+import { TrackSelectionSidebar } from '@/components/track-selection-sidebar';
+import { TrackPreview } from '@/components/track-preview';
 import { QuestionDropdown } from '@/components/question-dropdown';
 import { ErrorDisplay } from '@/components/error-display';
 import ErrorBoundary from '@/components/error-boundary';
@@ -46,8 +45,11 @@ function TracksPageContent() {
   const [extractedTracks, setExtractedTracks] = useState<SpotifyTrack[]>([]);
   const [isExtractingTracks, setIsExtractingTracks] = useState(false);
 
+  // Sidebar state
+  const [sidebarSlotIndex, setSidebarSlotIndex] = useState<number | null>(null);
+  const [showCustomInSidebar, setShowCustomInSidebar] = useState(false);
+
   // Track selection state (keyed by slot index)
-  const [showCustomInput, setShowCustomInput] = useState<Record<number, boolean>>({});
   const [savingStates, setSavingStates] = useState<Record<number, boolean>>({});
   const [errors, setErrors] = useState<Record<number, string>>({});
 
@@ -236,13 +238,6 @@ function TracksPageContent() {
       return newSlots;
     });
     
-    // Hide custom input when question changes
-    setShowCustomInput((prev) => {
-      const newState = { ...prev };
-      delete newState[slotIndex];
-      return newState;
-    });
-    
     // If track exists, save it to the new question
     if (hasTrack && slot.track && gamePlayerId) {
       setSavingStates((prev) => ({ ...prev, [slotIndex]: true }));
@@ -352,53 +347,69 @@ function TracksPageContent() {
         });
       } finally {
         setSavingStates((prev) => ({ ...prev, [slotIndex]: false }));
+        // Close sidebar after successful save
+        if (sidebarSlotIndex === slotIndex) {
+          setSidebarSlotIndex(null);
+          setShowCustomInSidebar(false);
+        }
       }
     },
-    [gamePlayerId, slots]
+    [gamePlayerId, slots, sidebarSlotIndex]
   );
 
-  const handleCustomTrackAdd = useCallback(
-    async (slotIndex: number, track: SpotifyTrack) => {
-      // Hide custom input
-      setShowCustomInput((prev) => {
-        const newState = { ...prev };
-        delete newState[slotIndex];
-        return newState;
-      });
-      
-      // Select the track (this will save it)
-      await handleSlotTrackSelect(slotIndex, track, true); // true = isCustomTrack (no year validation)
+  const handleOpenSidebar = useCallback((slotIndex: number) => {
+    setSidebarSlotIndex(slotIndex);
+    setShowCustomInSidebar(false);
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[slotIndex];
+      return newErrors;
+    });
+  }, []);
+
+  const handleCloseSidebar = useCallback(() => {
+    setSidebarSlotIndex(null);
+    setShowCustomInSidebar(false);
+  }, []);
+
+  const handleSidebarTrackSelect = useCallback(
+    async (track: SpotifyTrack) => {
+      if (sidebarSlotIndex === null) return;
+      await handleSlotTrackSelect(sidebarSlotIndex, track, false);
+      // Sidebar is closed automatically by handleSlotTrackSelect
     },
-    [handleSlotTrackSelect]
+    [sidebarSlotIndex, handleSlotTrackSelect]
   );
 
-  // Get filtered tracks for a slot (all extracted tracks, filtering/sorting handled by TrackList)
-  const getFilteredTracks = useCallback((slotIndex: number): SpotifyTrack[] => {
-    return extractedTracks;
-  }, [extractedTracks]);
+  const handleSidebarCustomTrack = useCallback(
+    async (track: SpotifyTrack) => {
+      if (sidebarSlotIndex === null) return;
+      await handleSlotTrackSelect(sidebarSlotIndex, track, true); // true = isCustomTrack
+      // Sidebar is closed automatically by handleSlotTrackSelect
+    },
+    [sidebarSlotIndex, handleSlotTrackSelect]
+  );
+
 
   const handleAddSlot = useCallback(() => {
     setSlots((prev) => [...prev, { questionId: null, track: null }]);
   }, []);
 
   const handleRemoveSlot = useCallback((slotIndex: number) => {
-    if (slotIndex <= 4) {
-      return; // Can't remove slots 1-5
-    }
     setSlots((prev) => prev.filter((_, index) => index !== slotIndex));
   }, []);
 
   const handleComplete = () => {
     const completedSlots = slots.filter((s) => s.questionId && s.track);
-    if (completedSlots.length >= MINIMUM_QUESTIONS && gameId) {
+    if (completedSlots.length > 0 && gameId) {
       router.push(`/success?gameId=${gameId}`);
     }
   };
 
   const completedSlots = slots.filter((s) => s.questionId && s.track);
   const completedCount = completedSlots.length;
-  const canComplete = completedCount >= MINIMUM_QUESTIONS;
-  const progressPercentage = MINIMUM_QUESTIONS > 0 ? (completedCount / MINIMUM_QUESTIONS) * 100 : 0;
+  const canComplete = completedCount > 0;
+  const progressPercentage = MINIMUM_QUESTIONS > 0 ? Math.min((completedCount / MINIMUM_QUESTIONS) * 100, 100) : 0;
 
   // Get all selected question IDs (excluding nulls) for dropdown exclusion
   const selectedQuestionIds = slots
@@ -452,7 +463,7 @@ function TracksPageContent() {
           <CardContent className="p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="font-medium">
-                {completedCount} of {MINIMUM_QUESTIONS} minimum questions answered
+                {completedCount} of {MINIMUM_QUESTIONS} suggested questions answered
                 {slots.length > MINIMUM_QUESTIONS && ` (${slots.length} total slots)`}
               </span>
               <span className="text-muted-foreground">{Math.min(Math.round(progressPercentage), 100)}%</span>
@@ -471,7 +482,6 @@ function TracksPageContent() {
             const selectedTrack = slot.track;
             const isSaving = savingStates[slotIndex] || false;
             const slotError = errors[slotIndex];
-            const showCustom = showCustomInput[slotIndex] || false;
 
             // For dropdown: exclude this slot's question and all other selected questions
             const excludedQuestionIds = slots
@@ -504,16 +514,14 @@ function TracksPageContent() {
                     {selectedTrack && question && (
                       <div className="shrink-0 text-primary">✓</div>
                     )}
-                    {slotIndex > 4 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveSlot(slotIndex)}
-                        className="shrink-0"
-                      >
-                        Remove
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveSlot(slotIndex)}
+                      className="shrink-0"
+                    >
+                      Remove
+                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -529,73 +537,22 @@ function TracksPageContent() {
 
                   {question && (
                     <>
-                      {!selectedTrack ? (
-                        <>
-                          {showCustom ? (
-                            accessToken && (
-                              <CustomTrackInput
-                                onTrackFound={(track) => handleCustomTrackAdd(slotIndex, track)}
-                                onCancel={() => {
-                                  setShowCustomInput((prev) => {
-                                    const newState = { ...prev };
-                                    delete newState[slotIndex];
-                                    return newState;
-                                  });
-                                }}
-                                accessToken={accessToken}
-                                error={slotError}
-                              />
-                            )
-                          ) : (
-                            <>
-                              <TrackList
-                                tracks={getFilteredTracks(slotIndex)}
-                                selectedTrackId={null}
-                                onSelectTrack={(track) => handleSlotTrackSelect(slotIndex, track)}
-                                isLoading={isExtractingTracks}
-                                error={slotError}
-                              />
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setShowCustomInput((prev) => ({ ...prev, [slotIndex]: true }));
-                                  setErrors((prev) => {
-                                    const newErrors = { ...prev };
-                                    delete newErrors[slotIndex];
-                                    return newErrors;
-                                  });
-                                }}
-                                className="w-full mt-2"
-                              >
-                                Can't find your track? Add custom track
-                              </Button>
-                            </>
-                          )}
-                        </>
+                      {selectedTrack ? (
+                        <TrackPreview
+                          track={selectedTrack}
+                          onChange={() => handleOpenSidebar(slotIndex)}
+                          isLoading={isSaving}
+                        />
                       ) : (
-                        <div className="space-y-2">
-                          <TrackCard
-                            track={selectedTrack}
-                            onSelect={() => {}}
-                            isSelected={true}
-                            isLoading={isSaving}
-                          />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSlots((prev) => {
-                                const newSlots = [...prev];
-                                newSlots[slotIndex] = { ...newSlots[slotIndex], track: null };
-                                return newSlots;
-                              });
-                            }}
-                            disabled={isSaving}
-                          >
-                            Change Selection
-                          </Button>
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          onClick={() => handleOpenSidebar(slotIndex)}
+                          className="w-full"
+                          disabled={isSaving}
+                        >
+                          Select Track
+                        </Button>
                       )}
                     </>
                   )}
@@ -623,12 +580,30 @@ function TracksPageContent() {
               className="w-full"
               size="lg"
             >
-              {canComplete
-                ? 'Complete Selection'
-                : `Answer ${MINIMUM_QUESTIONS - completedCount} more question${MINIMUM_QUESTIONS - completedCount !== 1 ? 's' : ''}`}
+              Complete Selection
             </Button>
           </div>
         </div>
+
+        {/* Track Selection Sidebar */}
+        {sidebarSlotIndex !== null && (
+          <TrackSelectionSidebar
+            isOpen={sidebarSlotIndex !== null}
+            onClose={handleCloseSidebar}
+            questionText={
+              slots[sidebarSlotIndex]?.questionId
+                ? allQuestions.find((q) => q.id === slots[sidebarSlotIndex].questionId)?.question_text || null
+                : null
+            }
+            tracks={extractedTracks}
+            selectedTrackId={slots[sidebarSlotIndex]?.track?.id || null}
+            onSelectTrack={handleSidebarTrackSelect}
+            onCustomTrackAdd={handleSidebarCustomTrack}
+            accessToken={accessToken}
+            isLoading={isExtractingTracks}
+            error={sidebarSlotIndex !== null ? errors[sidebarSlotIndex] : null}
+          />
+        )}
       </div>
     </div>
   );

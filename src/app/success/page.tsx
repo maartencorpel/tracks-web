@@ -23,7 +23,6 @@ function SuccessPageContent() {
   const [gamePlayerId, setGamePlayerId] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [answers, setAnswers] = useState<PlayerAnswerWithQuestion[]>([]);
-  const [isReady, setIsReady] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,24 +82,18 @@ function SuccessPageContent() {
       const playerAnswers = await SupabaseService.getPlayerAnswers(playerId);
       setAnswers(playerAnswers);
 
-      // Check readiness status
-      const ready = await SupabaseService.checkPlayerReadiness(playerId);
-      setIsReady(ready);
-
       trackPageView('success', validGameId);
 
       // Clear selected questions from localStorage after successful load
       const storageKey = getSelectedQuestionsKey(validGameId);
       browserStorage.remove(storageKey);
 
-      // Auto-close only if player is ready (after 10 seconds)
-      if (ready) {
-        const timer = setTimeout(() => {
-          closeWindow();
-        }, AUTO_CLOSE_DELAY_MS);
+      // Auto-close after delay
+      const timer = setTimeout(() => {
+        closeWindow();
+      }, AUTO_CLOSE_DELAY_MS);
 
-        return () => clearTimeout(timer);
-      }
+      return () => clearTimeout(timer);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load answers';
       setError(errorMessage);
@@ -154,9 +147,7 @@ function SuccessPageContent() {
         <CardHeader className="text-center space-y-4">
           <CardTitle className="text-3xl">You're All Set!</CardTitle>
           <CardDescription className="text-lg">
-            {isReady
-              ? 'You\'re ready to play! Return to the host\'s device to start the game.'
-              : 'You\'ve joined the game! Answer more questions to be ready.'}
+            You're ready to play! Return to the host's device to start the game.
           </CardDescription>
         </CardHeader>
         
@@ -166,22 +157,19 @@ function SuccessPageContent() {
             <AnswerSummary
               answers={answers}
               totalQuestions={answers.length}
-              isReady={isReady}
             />
           )}
 
           {/* Success Message */}
-          <Alert variant={isReady ? 'success' : 'default'}>
+          <Alert variant="success">
             <AlertDescription>
               {gameId 
                 ? `Welcome to game ${gameId}!`
                 : 'Welcome to the game!'
               }
-              {isReady && (
-                <span className="block mt-2">
-                  Return to the host's device to start playing.
-                </span>
-              )}
+              <span className="block mt-2">
+                Return to the host's device to start playing.
+              </span>
             </AlertDescription>
           </Alert>
           
@@ -192,19 +180,9 @@ function SuccessPageContent() {
             </CardHeader>
             <CardContent>
               <ul className="text-sm text-muted-foreground space-y-2">
-                {isReady ? (
-                  <>
-                    <li>• Return to the host's device</li>
-                    <li>• Wait for the host to start the game</li>
-                    <li>• Get ready to discover amazing music together!</li>
-                  </>
-                ) : (
-                  <>
-                    <li>• Answer at least 5 questions to be ready</li>
-                    <li>• You can update your answers anytime</li>
-                    <li>• Return to the host's device when ready</li>
-                  </>
-                )}
+                <li>• Return to the host's device</li>
+                <li>• Wait for the host to start the game</li>
+                <li>• Get ready to discover amazing music together!</li>
               </ul>
             </CardContent>
           </Card>

@@ -9,13 +9,13 @@ import { CheckCircle2, XCircle } from 'lucide-react';
 interface AnswerSummaryProps {
   answers: PlayerAnswerWithQuestion[];
   totalQuestions?: number;
-  isReady: boolean;
+  isReady?: boolean;
 }
 
 export function AnswerSummary({
   answers,
   totalQuestions,
-  isReady,
+  isReady = false,
 }: AnswerSummaryProps) {
   const answerCount = answers.length;
   const displayTotal = totalQuestions || answerCount;

@@ -6,11 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AnswerSummary } from '@/components/answer-summary';
-import { QuestionSelector } from '@/components/question-selector';
 import { QuestionDropdown } from '@/components/question-dropdown';
-import { TrackList } from '@/components/track-list';
-import { CustomTrackInput } from '@/components/custom-track-input';
-import { TrackCard } from '@/components/track-card';
+import { TrackSelectionSidebar } from '@/components/track-selection-sidebar';
+import { TrackPreview } from '@/components/track-preview';
 import { ErrorDisplay } from '@/components/error-display';
 import ErrorBoundary from '@/components/error-boundary';
 import { SupabaseService } from '@/lib/supabase';
@@ -37,17 +35,18 @@ function UpdateAnswersPageContent() {
   // Data state
   const [existingAnswers, setExistingAnswers] = useState<PlayerAnswerWithQuestion[]>([]);
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
-  const [isReady, setIsReady] = useState(false);
   const [extractedTracks, setExtractedTracks] = useState<SpotifyTrack[]>([]);
   const [isExtractingTracks, setIsExtractingTracks] = useState(false);
 
   // UI state
   const [answers, setAnswers] = useState<Record<string, SpotifyTrack>>({});
   const [answeredQuestionIds, setAnsweredQuestionIds] = useState<string[]>([]);
-  const [showAddQuestions, setShowAddQuestions] = useState(false);
-  const [selectedNewQuestionIds, setSelectedNewQuestionIds] = useState<string[]>([]);
+  const [selectedNewQuestionIds, setSelectedNewQuestionIds] = useState<Array<string | null>>([]);
   const [changingQuestionId, setChangingQuestionId] = useState<string | null>(null);
-  const [showCustomInput, setShowCustomInput] = useState<Record<string, boolean>>({});
+  
+  // Sidebar state
+  const [sidebarQuestionId, setSidebarQuestionId] = useState<string | null>(null);
+  const [showCustomInSidebar, setShowCustomInSidebar] = useState(false);
 
   // Loading states
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
@@ -152,10 +151,6 @@ function UpdateAnswersPageContent() {
       }
       setAllQuestions(questions);
 
-      // Check readiness status
-      const ready = await SupabaseService.checkPlayerReadiness(playerId);
-      setIsReady(ready);
-
       trackPageView('update_answers', validGameId);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize';
@@ -230,10 +225,6 @@ function UpdateAnswersPageContent() {
           // Remove from selectedNewQuestionIds if it was a newly added question
           setSelectedNewQuestionIds((prev) => prev.filter((id) => id !== questionId));
         }
-
-        // Re-check readiness
-        const ready = await SupabaseService.checkPlayerReadiness(gamePlayerId);
-        setIsReady(ready);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Failed to save answer';
@@ -247,30 +238,58 @@ function UpdateAnswersPageContent() {
         });
       } finally {
         setSavingStates((prev) => ({ ...prev, [questionId]: false }));
+        // Close sidebar after successful save
+        if (sidebarQuestionId === questionId) {
+          setSidebarQuestionId(null);
+          setShowCustomInSidebar(false);
+        }
       }
     },
-    [gamePlayerId, answeredQuestionIds]
+    [gamePlayerId, answeredQuestionIds, sidebarQuestionId]
   );
 
-  const handleCustomTrackAdd = useCallback(
-    async (questionId: string, track: SpotifyTrack) => {
-      // Hide custom input
-      setShowCustomInput((prev) => {
-        const newState = { ...prev };
-        delete newState[questionId];
-        return newState;
-      });
-      
-      // Select the track (this will save it)
-      await handleSelectTrack(questionId, track, true); // true = isCustomTrack (no year validation)
+  const handleOpenSidebar = useCallback((questionId: string) => {
+    setSidebarQuestionId(questionId);
+    setShowCustomInSidebar(false);
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      delete newErrors[questionId];
+      return newErrors;
+    });
+  }, []);
+
+  const handleCloseSidebar = useCallback(() => {
+    setSidebarQuestionId(null);
+    setShowCustomInSidebar(false);
+  }, []);
+
+  const handleSidebarTrackSelect = useCallback(
+    async (track: SpotifyTrack) => {
+      if (!sidebarQuestionId) return;
+      await handleSelectTrack(sidebarQuestionId, track, false);
+      handleCloseSidebar();
     },
-    [handleSelectTrack]
+    [sidebarQuestionId, handleSelectTrack, handleCloseSidebar]
+  );
+
+  const handleSidebarCustomTrack = useCallback(
+    async (track: SpotifyTrack) => {
+      if (!sidebarQuestionId) return;
+      await handleSelectTrack(sidebarQuestionId, track, true); // true = isCustomTrack
+      handleCloseSidebar();
+    },
+    [sidebarQuestionId, handleSelectTrack, handleCloseSidebar]
   );
 
   const handleQuestionChange = useCallback(
     async (questionId: string, newQuestionId: string) => {
       const track = answers[questionId];
       if (!track || !gamePlayerId) {
+        // Close sidebar if open for this question
+        if (sidebarQuestionId === questionId) {
+          setSidebarQuestionId(null);
+          setShowCustomInSidebar(false);
+        }
         return;
       }
 
@@ -314,10 +333,6 @@ function UpdateAnswersPageContent() {
           const newIds = prev.filter((id) => id !== questionId);
           return [...newIds, newQuestionId];
         });
-
-        // Re-check readiness
-        const ready = await SupabaseService.checkPlayerReadiness(gamePlayerId);
-        setIsReady(ready);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Failed to update question';
@@ -332,15 +347,6 @@ function UpdateAnswersPageContent() {
   const handleRemoveQuestion = useCallback(
     async (questionId: string) => {
       if (!gamePlayerId) {
-        return;
-      }
-
-      // Check minimum
-      if (answeredQuestionIds.length <= 5) {
-        setErrors((prev) => ({
-          ...prev,
-          [questionId]: 'You must have at least 5 answered questions',
-        }));
         return;
       }
 
@@ -365,10 +371,6 @@ function UpdateAnswersPageContent() {
           return newAnswers;
         });
         setAnsweredQuestionIds((prev) => prev.filter((id) => id !== questionId));
-
-        // Re-check readiness
-        const ready = await SupabaseService.checkPlayerReadiness(gamePlayerId);
-        setIsReady(ready);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Failed to delete answer';
@@ -380,28 +382,23 @@ function UpdateAnswersPageContent() {
     [gamePlayerId, answeredQuestionIds.length]
   );
 
-  const handleToggleNewQuestion = (questionId: string) => {
+  const handleAddQuestion = () => {
+    // Add an empty slot (null) to selectedNewQuestionIds
+    setSelectedNewQuestionIds((prev) => [...prev, null]);
+  };
+
+  const handleNewQuestionSelect = (index: number, questionId: string) => {
+    // Replace null with actual question ID
     setSelectedNewQuestionIds((prev) => {
-      if (prev.includes(questionId)) {
-        return prev.filter((id) => id !== questionId);
-      }
-      return [...prev, questionId];
+      const newIds = [...prev];
+      newIds[index] = questionId;
+      return newIds;
     });
   };
 
-  const handleAddSelectedQuestions = () => {
-    // Questions are added but not yet answered (need tracks)
-    // They'll be shown in the "New Questions Needing Tracks" section
-    setShowAddQuestions(false);
-    // Keep selectedNewQuestionIds so they show in the track selection section
+  const handleRemoveNewQuestion = (index: number) => {
+    setSelectedNewQuestionIds((prev) => prev.filter((_, i) => i !== index));
   };
-
-  const unansweredQuestions = useMemo(
-    () => allQuestions.filter(
-      (q) => !answeredQuestionIds.includes(q.id) && !selectedNewQuestionIds.includes(q.id)
-    ),
-    [allQuestions, answeredQuestionIds, selectedNewQuestionIds]
-  );
 
   if (isInitializing) {
     return (
@@ -449,7 +446,6 @@ function UpdateAnswersPageContent() {
         <AnswerSummary
           answers={existingAnswers}
           totalQuestions={answeredQuestionIds.length}
-          isReady={isReady}
         />
 
         {/* Current Answers */}
@@ -473,8 +469,6 @@ function UpdateAnswersPageContent() {
                 const isSaving = savingStates[questionId] || false;
                 const isDeletingQuestion = isDeleting[questionId] || false;
                 const questionError = errors[questionId];
-                const canRemove = answeredQuestionIds.length > 5;
-                const showCustom = showCustomInput[questionId] || false;
 
                 if (!question) return null;
 
@@ -506,97 +500,36 @@ function UpdateAnswersPageContent() {
                     <CardContent className="space-y-4">
                       {!isChanging && selectedTrack ? (
                         <>
-                          <TrackCard
+                          <TrackPreview
                             track={selectedTrack}
-                            onSelect={() => {}}
-                            isSelected={true}
+                            onChange={() => handleOpenSidebar(questionId)}
                             isLoading={isSaving}
                           />
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setChangingQuestionId(questionId)}
-                              disabled={isSaving || isDeletingQuestion}
-                            >
-                              Change Track
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleRemoveQuestion(questionId)}
-                              disabled={!canRemove || isSaving || isDeletingQuestion}
-                            >
-                              {isDeletingQuestion ? (
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                              ) : (
-                                'Remove Question'
-                              )}
-                            </Button>
-                            {!canRemove && (
-                              <p className="text-xs text-muted-foreground self-center">
-                                Minimum 5 questions required
-                              </p>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleRemoveQuestion(questionId)}
+                            disabled={isSaving || isDeletingQuestion}
+                            className="w-full"
+                          >
+                            {isDeletingQuestion ? (
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mx-auto" />
+                            ) : (
+                              'Remove Question'
                             )}
-                          </div>
+                          </Button>
                         </>
-                      ) : (
-                        <>
-                          {showCustom ? (
-                            accessToken && (
-                              <CustomTrackInput
-                                onTrackFound={(track) => handleCustomTrackAdd(questionId, track)}
-                                onCancel={() => {
-                                  setShowCustomInput((prev) => {
-                                    const newState = { ...prev };
-                                    delete newState[questionId];
-                                    return newState;
-                                  });
-                                  setChangingQuestionId(null);
-                                }}
-                                accessToken={accessToken}
-                                error={questionError}
-                              />
-                            )
-                          ) : (
-                            <>
-                              <TrackList
-                                tracks={extractedTracks}
-                                selectedTrackId={selectedTrack?.id || null}
-                                onSelectTrack={(track) => handleSelectTrack(questionId, track)}
-                                isLoading={isExtractingTracks}
-                                error={questionError}
-                              />
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setShowCustomInput((prev) => ({ ...prev, [questionId]: true }));
-                                    setErrors((prev) => {
-                                      const newErrors = { ...prev };
-                                      delete newErrors[questionId];
-                                      return newErrors;
-                                    });
-                                  }}
-                                  className="flex-1"
-                                >
-                                  Can't find your track? Add custom track
-                                </Button>
-                                {selectedTrack && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setChangingQuestionId(null)}
-                                  >
-                                    Cancel
-                                  </Button>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </>
-                      )}
+                      ) : !isChanging ? (
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          onClick={() => handleOpenSidebar(questionId)}
+                          className="w-full"
+                          disabled={isSaving || isDeletingQuestion}
+                        >
+                          Select Track
+                        </Button>
+                      ) : null}
                     </CardContent>
                   </Card>
                 );
@@ -605,130 +538,87 @@ function UpdateAnswersPageContent() {
           </CardContent>
         </Card>
 
-        {/* Add More Questions */}
-        {unansweredQuestions.length > 0 && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Add More Questions</CardTitle>
-                  <CardDescription>
-                    Select additional questions to answer ({unansweredQuestions.length} available)
-                  </CardDescription>
-                </div>
-                <Button
-                  variant={showAddQuestions ? 'outline' : 'default'}
-                  onClick={() => {
-                    setShowAddQuestions(!showAddQuestions);
-                    setSelectedNewQuestionIds([]);
-                  }}
-                >
-                  {showAddQuestions ? 'Cancel' : 'Add Questions'}
-                </Button>
-              </div>
-            </CardHeader>
-            {showAddQuestions && (
-              <CardContent className="space-y-4">
-                <QuestionSelector
-                  questions={unansweredQuestions}
-                  selectedQuestionIds={selectedNewQuestionIds}
-                  onToggleQuestion={handleToggleNewQuestion}
-                />
-                {selectedNewQuestionIds.length > 0 && (
-                  <Button
-                    onClick={handleAddSelectedQuestions}
-                    className="w-full"
-                    disabled={selectedNewQuestionIds.length === 0}
-                  >
-                    Add {selectedNewQuestionIds.length} Question{selectedNewQuestionIds.length !== 1 ? 's' : ''}
-                  </Button>
-                )}
-              </CardContent>
-            )}
-          </Card>
-        )}
+        {/* Add Another Question Button */}
+        <Button
+          onClick={handleAddQuestion}
+          variant="outline"
+          className="w-full"
+        >
+          Add Another Question
+        </Button>
 
         {/* New Questions Needing Tracks */}
         {selectedNewQuestionIds.length > 0 &&
-          selectedNewQuestionIds.map((questionId) => {
-              const question = allQuestions.find((q) => q.id === questionId);
-              const selectedTrack = answers[questionId];
-              const isSaving = savingStates[questionId] || false;
-              const questionError = errors[questionId];
-              const showCustom = showCustomInput[questionId] || false;
-
-              if (!question) return null;
+          selectedNewQuestionIds.map((questionId, index) => {
+              const question = questionId ? allQuestions.find((q) => q.id === questionId) : null;
+              const selectedTrack = questionId ? answers[questionId] : undefined;
+              const isSaving = questionId ? (savingStates[questionId] || false) : false;
+              const questionError = questionId ? errors[questionId] : undefined;
+              
+              // Get excluded question IDs (all answered + all other selected new questions)
+              const excludedQuestionIds = [
+                ...answeredQuestionIds,
+                ...selectedNewQuestionIds.filter((id, idx) => idx !== index && id !== null) as string[]
+              ];
 
               return (
-                <Card key={questionId} className="border-primary">
+                <Card key={index} className="border-primary">
                   <CardHeader>
-                    <CardTitle className="text-lg">New: {question.question_text}</CardTitle>
-                    <CardDescription>Select a track for this question</CardDescription>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 space-y-2">
+                        <QuestionDropdown
+                          questions={allQuestions}
+                          selectedQuestionId={questionId}
+                          excludedQuestionIds={excludedQuestionIds}
+                          onSelect={(newQuestionId) => handleNewQuestionSelect(index, newQuestionId)}
+                          placeholder="Select a question..."
+                          disabled={isSaving}
+                        />
+                        {question && selectedTrack && (
+                          <CardDescription className="mt-2">
+                            Selected: <span className="font-medium">{selectedTrack.name}</span> by{' '}
+                            {selectedTrack.artists[0]?.name}
+                          </CardDescription>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveNewQuestion(index)}
+                        className="shrink-0"
+                      >
+                        Remove
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {!selectedTrack ? (
-                      <>
-                        {showCustom ? (
-                          accessToken && (
-                            <CustomTrackInput
-                              onTrackFound={(track) => handleCustomTrackAdd(questionId, track)}
-                              onCancel={() => {
-                                setShowCustomInput((prev) => {
-                                  const newState = { ...prev };
-                                  delete newState[questionId];
-                                  return newState;
-                                });
-                              }}
-                              accessToken={accessToken}
-                              error={questionError}
-                            />
-                          )
-                        ) : (
-                          <>
-                            <TrackList
-                              tracks={extractedTracks}
-                              selectedTrackId={null}
-                              onSelectTrack={(track) => handleSelectTrack(questionId, track)}
-                              isLoading={isExtractingTracks}
-                              error={questionError}
-                            />
-                            <div className="flex gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  setShowCustomInput((prev) => ({ ...prev, [questionId]: true }));
-                                  setErrors((prev) => {
-                                    const newErrors = { ...prev };
-                                    delete newErrors[questionId];
-                                    return newErrors;
-                                  });
-                                }}
-                                className="flex-1"
-                              >
-                                Can't find your track? Add custom track
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedNewQuestionIds((prev) => prev.filter((id) => id !== questionId));
-                                }}
-                              >
-                                Remove from List
-                              </Button>
-                            </div>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      <TrackCard
-                        track={selectedTrack}
-                        onSelect={() => {}}
-                        isSelected={true}
-                        isLoading={isSaving}
-                      />
-                    )}
+                    {question && questionId ? (
+                      selectedTrack ? (
+                        <TrackPreview
+                          track={selectedTrack}
+                          onChange={() => handleOpenSidebar(questionId)}
+                          isLoading={isSaving}
+                        />
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="lg"
+                          onClick={() => handleOpenSidebar(questionId)}
+                          className="w-full"
+                          disabled={isSaving}
+                        >
+                          Select Track
+                        </Button>
+                      )
+                    ) : null}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveNewQuestion(index)}
+                      className="w-full"
+                    >
+                      Remove from List
+                    </Button>
                   </CardContent>
                 </Card>
               );
@@ -746,6 +636,26 @@ function UpdateAnswersPageContent() {
             </Button>
           </div>
         </div>
+
+        {/* Track Selection Sidebar */}
+        {sidebarQuestionId && (
+          <TrackSelectionSidebar
+            isOpen={sidebarQuestionId !== null}
+            onClose={handleCloseSidebar}
+            questionText={
+              sidebarQuestionId
+                ? allQuestions.find((q) => q.id === sidebarQuestionId)?.question_text || null
+                : null
+            }
+            tracks={extractedTracks}
+            selectedTrackId={sidebarQuestionId ? answers[sidebarQuestionId]?.id || null : null}
+            onSelectTrack={handleSidebarTrackSelect}
+            onCustomTrackAdd={handleSidebarCustomTrack}
+            accessToken={accessToken}
+            isLoading={isExtractingTracks}
+            error={sidebarQuestionId ? errors[sidebarQuestionId] : null}
+          />
+        )}
       </div>
     </div>
   );
