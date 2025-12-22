@@ -9,17 +9,17 @@ import { QuestionSelector } from '@/components/question-selector';
 import { ErrorDisplay } from '@/components/error-display';
 import ErrorBoundary from '@/components/error-boundary';
 import { SupabaseService } from '@/lib/supabase';
-import { browserStorage, getSelectedQuestionsKey, getQuestionsCache, setQuestionsCache, isQuestionsCacheValid } from '@/lib/browser-storage';
+import { getQuestionsCache, setQuestionsCache, isQuestionsCacheValid } from '@/lib/browser-storage';
 import { validateGameCode } from '@/lib/validation';
 import { trackPageView, trackError } from '@/lib/analytics';
 import { Question } from '@/types';
-import { MINIMUM_QUESTIONS, QUESTIONS_CACHE_TTL_MS } from '@/lib/constants';
+import { QUESTIONS_CACHE_TTL_MS } from '@/lib/constants';
 
 function QuestionsPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +44,6 @@ function QuestionsPageContent() {
     }
 
     loadQuestions();
-    loadSelectedQuestions();
   }, [searchParams]);
 
   const loadQuestions = async () => {
@@ -83,69 +82,27 @@ function QuestionsPageContent() {
     }
   };
 
-  const loadSelectedQuestions = () => {
-    const gameIdParam = searchParams.get('gameId');
-    if (!gameIdParam) return;
-
-    const validation = validateGameCode(gameIdParam);
-    if (!validation.valid || !validation.value) return;
-
-    const storageKey = getSelectedQuestionsKey(validation.value);
-    const stored = browserStorage.get(storageKey);
-
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored) as string[];
-        if (Array.isArray(parsed)) {
-          setSelectedQuestionIds(parsed);
-        }
-      } catch {
-        // Invalid stored data, ignore
-      }
-    }
-  };
-
-  const handleToggleQuestion = (questionId: string) => {
-    setSelectedQuestionIds((prev) => {
-      const newSelection = prev.includes(questionId)
-        ? prev.filter((id) => id !== questionId)
-        : [...prev, questionId];
-
-      // Save to localStorage immediately
-      if (gameId) {
-        const storageKey = getSelectedQuestionsKey(gameId);
-        browserStorage.set(storageKey, JSON.stringify(newSelection));
-      }
-
-      return newSelection;
-    });
+  const handleSelectQuestion = (questionId: string) => {
+    setSelectedQuestionId(questionId);
   };
 
   const handleContinue = () => {
-    if (selectedQuestionIds.length < MINIMUM_QUESTIONS || !gameId) return;
+    if (!selectedQuestionId || !gameId) return;
 
     setIsNavigating(true);
 
-    // Ensure localStorage is up to date
-    const storageKey = getSelectedQuestionsKey(gameId);
-    browserStorage.set(storageKey, JSON.stringify(selectedQuestionIds));
-
-    // Navigate to tracks page with question IDs
-    const questionsParam = selectedQuestionIds.join(',');
-    router.push(`/tracks?gameId=${gameId}&questions=${questionsParam}`);
+    // Navigate to tracks page with single question ID
+    router.push(`/tracks?gameId=${gameId}&question=${selectedQuestionId}`);
   };
-
-  const selectedCount = selectedQuestionIds.length;
-  const minimumMet = selectedCount >= MINIMUM_QUESTIONS;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-2xl space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Select Questions</h1>
+          <h1 className="text-3xl font-bold">Select a Question</h1>
           <p className="text-muted-foreground text-lg">
-            Choose at least {MINIMUM_QUESTIONS} questions to answer
+            Select a question to get started
           </p>
         </div>
 
@@ -163,41 +120,28 @@ function QuestionsPageContent() {
             <CardHeader>
               <CardTitle className="text-lg">Available Questions</CardTitle>
               <CardDescription>
-                Select the questions you'd like to answer. You can choose more than {MINIMUM_QUESTIONS}.
+                Browse the questions and select one to continue. You'll be able to add more questions on the next screen.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <QuestionSelector
                 questions={questions}
-                selectedQuestionIds={selectedQuestionIds}
-                onToggleQuestion={handleToggleQuestion}
+                selectedQuestionId={selectedQuestionId || undefined}
+                mode="single"
+                onSelectQuestion={handleSelectQuestion}
+                onToggleQuestion={() => {}} // Required prop but not used in single mode
+                selectedQuestionIds={[]} // Required prop but not used in single mode
                 isLoading={isLoading}
               />
             </CardContent>
           </Card>
         )}
 
-        {/* Progress Indicator */}
-        {!error && !isLoading && (
-          <Alert variant={minimumMet ? 'success' : 'default'}>
-            <AlertDescription className="text-center">
-              <span className="font-medium">
-                Selected: {selectedCount}/{MINIMUM_QUESTIONS} minimum
-              </span>
-              {!minimumMet && (
-                <span className="block text-sm text-muted-foreground mt-1">
-                  Select {MINIMUM_QUESTIONS - selectedCount} more question{MINIMUM_QUESTIONS - selectedCount !== 1 ? 's' : ''} to continue
-                </span>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-
         {/* Continue Button */}
         {!error && !isLoading && (
           <Button
             onClick={handleContinue}
-            disabled={!minimumMet || isNavigating}
+            disabled={!selectedQuestionId || isNavigating}
             className="w-full"
             size="lg"
           >

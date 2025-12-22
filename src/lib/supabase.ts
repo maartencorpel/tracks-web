@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { Game, GamePlayer, PlayerData, Question, PlayerAnswer, PlayerAnswerWithQuestion } from '@/types'
 import { MINIMUM_QUESTIONS } from '@/lib/constants'
+import { fetchSavedTracks, fetchTopTracks } from './spotify'
+import { SpotifyTrack, isTrackFromPastYear } from './spotify-search'
 
 // Supabase configuration - these are safe to expose client-side
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -422,6 +424,163 @@ export class SupabaseService {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
       }
+    }
+  }
+
+  /**
+   * Extracts player tracks from Spotify and stores them in the database
+   * 
+   * Fetches saved tracks (50) and top tracks (100), combines and deduplicates,
+   * filters to past year, and stores in extracted_tracks table.
+   * Always refreshes by deleting existing tracks first.
+   * 
+   * @param gamePlayerId - The game_player_id
+   * @param accessToken - Valid Spotify access token
+   * @returns Promise resolving to success status, count of tracks extracted, and optional error
+   */
+  static async extractPlayerTracks(
+    gamePlayerId: string,
+    accessToken: string
+  ): Promise<{ success: boolean; count: number; error?: string }> {
+    try {
+      // Fetch saved tracks (up to 50)
+      const savedTracks = await fetchSavedTracks(accessToken, 50)
+
+      // Fetch top tracks (up to 100)
+      const topTracks = await fetchTopTracks(accessToken, 100)
+
+      // Combine and deduplicate by track ID (keep first occurrence)
+      const allTracks = [
+        ...savedTracks.map((t) => ({ track: t, source: 'saved' as const })),
+        ...topTracks.map((t) => ({ track: t, source: 'top' as const })),
+      ]
+
+      const uniqueTracks = Array.from(
+        new Map(allTracks.map((item) => [item.track.id, item])).values()
+      )
+
+      // Filter to past year
+      const pastYearTracks = uniqueTracks.filter((item) =>
+        isTrackFromPastYear(item.track)
+      )
+
+      // Delete existing tracks for this player (always refresh)
+      const { error: deleteError } = await supabase
+        .from('extracted_tracks')
+        .delete()
+        .eq('game_player_id', gamePlayerId)
+
+      if (deleteError) {
+        return {
+          success: false,
+          count: 0,
+          error: `Failed to delete existing tracks: ${deleteError.message}`,
+        }
+      }
+
+      // Store in database
+      await this.storeExtractedTracks(gamePlayerId, pastYearTracks)
+
+      return { success: true, count: pastYearTracks.length }
+    } catch (error) {
+      return {
+        success: false,
+        count: 0,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }
+    }
+  }
+
+  /**
+   * Retrieves extracted tracks for a player from the database
+   * 
+   * @param gamePlayerId - The game_player_id
+   * @returns Promise resolving to array of Spotify tracks, or empty array if none found
+   */
+  static async getExtractedTracks(gamePlayerId: string): Promise<SpotifyTrack[]> {
+    try {
+      const { data, error } = await supabase
+        .from('extracted_tracks')
+        .select('*')
+        .eq('game_player_id', gamePlayerId)
+
+      if (error) {
+        console.error('Error fetching extracted tracks:', error)
+        return []
+      }
+
+      if (!data || data.length === 0) {
+        return []
+      }
+
+      // Convert database records to SpotifyTrack format
+      return data.map((record) => ({
+        id: record.track_id,
+        name: record.track_name,
+        artists: [{ name: record.artist_name }],
+        album: {
+          name: record.album_name || '',
+          images: record.album_image_url ? [{ url: record.album_image_url }] : [],
+          release_date: record.release_year ? `${record.release_year}-01-01` : '',
+        },
+        external_urls: { spotify: record.external_url },
+        preview_url: record.preview_url || null,
+      }))
+    } catch (error) {
+      console.error('Error fetching extracted tracks:', error)
+      return []
+    }
+  }
+
+  /**
+   * Stores extracted tracks in the database
+   * 
+   * Bulk inserts tracks into extracted_tracks table using UPSERT to handle duplicates.
+   * 
+   * @param gamePlayerId - The game_player_id
+   * @param tracks - Array of tracks with source information
+   * @returns Promise resolving to void
+   */
+  static async storeExtractedTracks(
+    gamePlayerId: string,
+    tracks: Array<{ track: SpotifyTrack; source: 'saved' | 'top' }>
+  ): Promise<void> {
+    if (tracks.length === 0) {
+      return
+    }
+
+    try {
+      // Map tracks to database schema
+      const records = tracks.map(({ track, source }) => {
+        const releaseYear = track.album.release_date
+          ? track.album.release_date.substring(0, 4)
+          : null
+
+        return {
+          game_player_id: gamePlayerId,
+          track_id: track.id,
+          track_name: track.name,
+          artist_name: track.artists[0]?.name || '',
+          album_name: track.album.name || null,
+          album_image_url: track.album.images[0]?.url || null,
+          release_year: releaseYear,
+          external_url: track.external_urls.spotify,
+          preview_url: track.preview_url || null,
+          source,
+        }
+      })
+
+      // Bulk insert using UPSERT to handle duplicates
+      const { error } = await supabase.from('extracted_tracks').upsert(records, {
+        onConflict: 'game_player_id,track_id',
+      })
+
+      if (error) {
+        throw new Error(`Failed to store extracted tracks: ${error.message}`)
+      }
+    } catch (error) {
+      console.error('Error storing extracted tracks:', error)
+      throw error
     }
   }
 }

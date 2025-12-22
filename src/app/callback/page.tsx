@@ -67,7 +67,7 @@ function CallbackPageContent() {
   /**
    * Updates the progress indicator and status message
    * 
-   * @param step - Current step number (1-5)
+   * @param step - Current step number (1-6)
    * @param statusMessage - Status message to display
    */
   const updateProgress = (step: number, statusMessage: string) => {
@@ -208,6 +208,25 @@ function CallbackPageContent() {
       
       log(`Found ${existingAnswers.length} existing answers`);
 
+      // Extract tracks
+      updateProgress(5, 'Extracting your tracks...');
+      log('Extracting tracks from Spotify');
+      try {
+        const extractionResult = await SupabaseService.extractPlayerTracks(
+          gamePlayerId,
+          tokenData.access_token
+        );
+        if (extractionResult.success) {
+          log(`Extracted ${extractionResult.count} tracks`);
+        } else {
+          log(`Warning: Track extraction failed: ${extractionResult.error}`, true);
+        }
+      } catch (extractionError) {
+        const extractionErrorMessage = extractionError instanceof Error ? extractionError.message : 'Unknown error';
+        log(`Warning: Track extraction error: ${extractionErrorMessage}`, true);
+        // Continue anyway - extraction can happen later if needed
+      }
+
       // Store access token in sessionStorage for Spotify API calls
       try {
         sessionStorage.set(SPOTIFY_ACCESS_TOKEN_KEY, tokenData.access_token);
@@ -221,7 +240,7 @@ function CallbackPageContent() {
       browserStorage.remove(PENDING_GAME_ID_KEY);
 
       // Redirect based on whether answers exist
-      updateProgress(5, 'Redirecting...');
+      updateProgress(6, 'Redirecting...');
       log(`Redirecting to ${hasAnswers ? 'update-answers' : 'questions'}`);
 
       const redirectPath = hasAnswers 
@@ -253,12 +272,13 @@ function CallbackPageContent() {
           {/* Progress Steps */}
           <ProgressSteps 
             currentStep={currentStep} 
-            totalSteps={5}
+            totalSteps={6}
             stepLabels={[
               'Verifying game...',
               'Exchanging code for token...',
               'Fetching your Spotify profile...',
               'Checking your answers...',
+              'Extracting your tracks...',
               'Redirecting...'
             ]}
           />

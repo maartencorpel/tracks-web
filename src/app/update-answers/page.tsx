@@ -7,13 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AnswerSummary } from '@/components/answer-summary';
 import { QuestionSelector } from '@/components/question-selector';
-import { TrackSearch } from '@/components/track-search';
+import { TrackList } from '@/components/track-list';
+import { CustomTrackInput } from '@/components/custom-track-input';
 import { TrackCard } from '@/components/track-card';
 import { ErrorDisplay } from '@/components/error-display';
 import ErrorBoundary from '@/components/error-boundary';
 import { SupabaseService } from '@/lib/supabase';
 import { fetchSpotifyUser, refreshAccessToken } from '@/lib/spotify';
-import { searchTracksByYear, SpotifyTrack, convertAnswerToTrack, isTrackFromPastYear } from '@/lib/spotify-search';
+import { SpotifyTrack, convertAnswerToTrack, isTrackFromPastYear } from '@/lib/spotify-search';
 import { sessionStorage, SPOTIFY_ACCESS_TOKEN_KEY, getQuestionsCache, setQuestionsCache, isQuestionsCacheValid } from '@/lib/browser-storage';
 import { validateGameCode } from '@/lib/validation';
 import { trackPageView, trackError } from '@/lib/analytics';
@@ -36,6 +37,8 @@ function UpdateAnswersPageContent() {
   const [existingAnswers, setExistingAnswers] = useState<PlayerAnswerWithQuestion[]>([]);
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
   const [isReady, setIsReady] = useState(false);
+  const [extractedTracks, setExtractedTracks] = useState<SpotifyTrack[]>([]);
+  const [isExtractingTracks, setIsExtractingTracks] = useState(false);
 
   // UI state
   const [answers, setAnswers] = useState<Record<string, SpotifyTrack>>({});
@@ -43,11 +46,9 @@ function UpdateAnswersPageContent() {
   const [showAddQuestions, setShowAddQuestions] = useState(false);
   const [selectedNewQuestionIds, setSelectedNewQuestionIds] = useState<string[]>([]);
   const [changingQuestionId, setChangingQuestionId] = useState<string | null>(null);
+  const [showCustomInput, setShowCustomInput] = useState<Record<string, boolean>>({});
 
-  // Search and loading states
-  const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
-  const [searchResults, setSearchResults] = useState<Record<string, SpotifyTrack[]>>({});
-  const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
+  // Loading states
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
   const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -95,6 +96,30 @@ function UpdateAnswersPageContent() {
       }
 
       setGamePlayerId(playerId);
+
+      // Load extracted tracks
+      let tracks = await SupabaseService.getExtractedTracks(playerId);
+      
+      // If no tracks found, extract them on-the-fly
+      if (tracks.length === 0 && token) {
+        setIsExtractingTracks(true);
+        try {
+          const extractionResult = await SupabaseService.extractPlayerTracks(
+            playerId,
+            token
+          );
+          if (extractionResult.success) {
+            tracks = await SupabaseService.getExtractedTracks(playerId);
+          }
+        } catch (extractionError) {
+          console.error('Failed to extract tracks:', extractionError);
+          // Continue anyway - user can still use custom track input
+        } finally {
+          setIsExtractingTracks(false);
+        }
+      }
+      
+      setExtractedTracks(tracks);
 
       // Fetch existing answers
       const answers = await SupabaseService.getPlayerAnswers(playerId);
@@ -162,66 +187,8 @@ function UpdateAnswersPageContent() {
     return newAccessToken;
   }, [gameId, gamePlayerId]);
 
-  const handleSearch = useCallback(
-    async (questionId: string, query: string) => {
-      if (!accessToken || !query || query.trim().length < 2) {
-        return;
-      }
-
-      setIsLoading((prev) => ({ ...prev, [questionId]: true }));
-      setSearchQueries((prev) => ({ ...prev, [questionId]: query }));
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[questionId];
-        return newErrors;
-      });
-
-      try {
-        let currentToken = accessToken;
-        let tracks: SpotifyTrack[];
-
-        try {
-          tracks = await searchTracksByYear(query, currentToken, 1);
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Failed to search tracks';
-          
-          // If token expired, try to refresh and retry
-          if (errorMessage.includes('expired') || errorMessage.includes('401')) {
-            try {
-              currentToken = await refreshToken();
-              tracks = await searchTracksByYear(query, currentToken, 1);
-            } catch (refreshError) {
-              const refreshErrorMessage = refreshError instanceof Error ? refreshError.message : 'Failed to refresh token';
-              setInitError('Spotify access token expired. Please re-authenticate.');
-              setErrors((prev) => ({ ...prev, [questionId]: refreshErrorMessage }));
-              return;
-            }
-          } else {
-            throw error;
-          }
-        }
-
-        setSearchResults((prev) => ({ ...prev, [questionId]: tracks }));
-
-        if (tracks.length === 0) {
-          setErrors((prev) => ({
-            ...prev,
-            [questionId]: 'No tracks from the past year found. Try a different search.',
-          }));
-        }
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Failed to search tracks';
-        setErrors((prev) => ({ ...prev, [questionId]: errorMessage }));
-      } finally {
-        setIsLoading((prev) => ({ ...prev, [questionId]: false }));
-      }
-    },
-    [accessToken, refreshToken]
-  );
-
   const handleSelectTrack = useCallback(
-    async (questionId: string, track: SpotifyTrack) => {
+    async (questionId: string, track: SpotifyTrack, isCustomTrack: boolean = false) => {
       if (!gamePlayerId) {
         setErrors((prev) => ({
           ...prev,
@@ -230,8 +197,8 @@ function UpdateAnswersPageContent() {
         return;
       }
 
-      // Validate track is from past year before saving
-      if (!isTrackFromPastYear(track)) {
+      // Validate track is from past year before saving (only for extracted tracks, not custom tracks)
+      if (!isCustomTrack && !isTrackFromPastYear(track)) {
         setErrors((prev) => ({
           ...prev,
           [questionId]: 'This track is not from the past year. Please select a track released in the last year.',
@@ -282,6 +249,21 @@ function UpdateAnswersPageContent() {
       }
     },
     [gamePlayerId, answeredQuestionIds]
+  );
+
+  const handleCustomTrackAdd = useCallback(
+    async (questionId: string, track: SpotifyTrack) => {
+      // Hide custom input
+      setShowCustomInput((prev) => {
+        const newState = { ...prev };
+        delete newState[questionId];
+        return newState;
+      });
+      
+      // Select the track (this will save it)
+      await handleSelectTrack(questionId, track, true); // true = isCustomTrack (no year validation)
+    },
+    [handleSelectTrack]
   );
 
   const handleRemoveQuestion = useCallback(
@@ -425,12 +407,11 @@ function UpdateAnswersPageContent() {
                 const question = allQuestions.find((q) => q.id === questionId);
                 const selectedTrack = answers[questionId];
                 const isChanging = changingQuestionId === questionId;
-                const searchResult = searchResults[questionId] || [];
-                const isSearching = isLoading[questionId] || false;
                 const isSaving = savingStates[questionId] || false;
                 const isDeletingQuestion = isDeleting[questionId] || false;
                 const questionError = errors[questionId];
                 const canRemove = answeredQuestionIds.length > 5;
+                const showCustom = showCustomInput[questionId] || false;
 
                 if (!question) return null;
 
@@ -491,53 +472,58 @@ function UpdateAnswersPageContent() {
                         </>
                       ) : (
                         <>
-                          <TrackSearch
-                            onSearch={async (query) => {
-                              await handleSearch(questionId, query);
-                            }}
-                            isLoading={isSearching}
-                            error={questionError}
-                          />
-
-                          {searchResult.length > 0 && (
-                            <div className="space-y-2">
-                              <p className="text-sm text-muted-foreground">
-                                {searchResult.length} track{searchResult.length !== 1 ? 's' : ''}{' '}
-                                from the past year
-                              </p>
-                              <div className="space-y-2 max-h-96 overflow-y-auto">
-                                {searchResult.map((track) => (
-                                  <TrackCard
-                                    key={track.id}
-                                    track={track}
-                                    onSelect={(track) => handleSelectTrack(questionId, track)}
-                                    isLoading={isSaving}
-                                  />
-                                ))}
+                          {showCustom ? (
+                            accessToken && (
+                              <CustomTrackInput
+                                onTrackFound={(track) => handleCustomTrackAdd(questionId, track)}
+                                onCancel={() => {
+                                  setShowCustomInput((prev) => {
+                                    const newState = { ...prev };
+                                    delete newState[questionId];
+                                    return newState;
+                                  });
+                                  setChangingQuestionId(null);
+                                }}
+                                accessToken={accessToken}
+                                error={questionError}
+                              />
+                            )
+                          ) : (
+                            <>
+                              <TrackList
+                                tracks={extractedTracks}
+                                selectedTrackId={selectedTrack?.id || null}
+                                onSelectTrack={(track) => handleSelectTrack(questionId, track)}
+                                isLoading={isExtractingTracks}
+                                error={questionError}
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setShowCustomInput((prev) => ({ ...prev, [questionId]: true }));
+                                    setErrors((prev) => {
+                                      const newErrors = { ...prev };
+                                      delete newErrors[questionId];
+                                      return newErrors;
+                                    });
+                                  }}
+                                  className="flex-1"
+                                >
+                                  Can't find your track? Add custom track
+                                </Button>
+                                {selectedTrack && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setChangingQuestionId(null)}
+                                  >
+                                    Cancel
+                                  </Button>
+                                )}
                               </div>
-                            </div>
-                          )}
-
-                          {searchQueries[questionId] &&
-                            searchQueries[questionId].length >= 2 &&
-                            !isSearching &&
-                            searchResult.length === 0 &&
-                            !questionError && (
-                              <Alert>
-                                <AlertDescription>
-                                  No tracks from the past year found. Try a different search.
-                                </AlertDescription>
-                              </Alert>
-                            )}
-
-                          {selectedTrack && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setChangingQuestionId(null)}
-                            >
-                              Cancel
-                            </Button>
+                            </>
                           )}
                         </>
                       )}
@@ -597,10 +583,9 @@ function UpdateAnswersPageContent() {
           selectedNewQuestionIds.map((questionId) => {
               const question = allQuestions.find((q) => q.id === questionId);
               const selectedTrack = answers[questionId];
-              const searchResult = searchResults[questionId] || [];
-              const isSearching = isLoading[questionId] || false;
               const isSaving = savingStates[questionId] || false;
               const questionError = errors[questionId];
+              const showCustom = showCustomInput[questionId] || false;
 
               if (!question) return null;
 
@@ -613,42 +598,58 @@ function UpdateAnswersPageContent() {
                   <CardContent className="space-y-4">
                     {!selectedTrack ? (
                       <>
-                        <TrackSearch
-                          onSearch={async (query) => {
-                            await handleSearch(questionId, query);
-                          }}
-                          isLoading={isSearching}
-                          error={questionError}
-                        />
-
-                        {searchResult.length > 0 && (
-                          <div className="space-y-2">
-                            <p className="text-sm text-muted-foreground">
-                              {searchResult.length} track{searchResult.length !== 1 ? 's' : ''}{' '}
-                              from the past year
-                            </p>
-                            <div className="space-y-2 max-h-96 overflow-y-auto">
-                              {searchResult.map((track) => (
-                                <TrackCard
-                                  key={track.id}
-                                  track={track}
-                                  onSelect={(track) => handleSelectTrack(questionId, track)}
-                                  isLoading={isSaving}
-                                />
-                              ))}
+                        {showCustom ? (
+                          accessToken && (
+                            <CustomTrackInput
+                              onTrackFound={(track) => handleCustomTrackAdd(questionId, track)}
+                              onCancel={() => {
+                                setShowCustomInput((prev) => {
+                                  const newState = { ...prev };
+                                  delete newState[questionId];
+                                  return newState;
+                                });
+                              }}
+                              accessToken={accessToken}
+                              error={questionError}
+                            />
+                          )
+                        ) : (
+                          <>
+                            <TrackList
+                              tracks={extractedTracks}
+                              selectedTrackId={null}
+                              onSelectTrack={(track) => handleSelectTrack(questionId, track)}
+                              isLoading={isExtractingTracks}
+                              error={questionError}
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setShowCustomInput((prev) => ({ ...prev, [questionId]: true }));
+                                  setErrors((prev) => {
+                                    const newErrors = { ...prev };
+                                    delete newErrors[questionId];
+                                    return newErrors;
+                                  });
+                                }}
+                                className="flex-1"
+                              >
+                                Can't find your track? Add custom track
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedNewQuestionIds((prev) => prev.filter((id) => id !== questionId));
+                                }}
+                              >
+                                Remove from List
+                              </Button>
                             </div>
-                          </div>
+                          </>
                         )}
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedNewQuestionIds((prev) => prev.filter((id) => id !== questionId));
-                          }}
-                        >
-                          Remove from List
-                        </Button>
                       </>
                     ) : (
                       <TrackCard

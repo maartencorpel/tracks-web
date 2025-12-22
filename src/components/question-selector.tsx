@@ -6,15 +6,21 @@ import { cn } from '@/lib/utils';
 
 interface QuestionSelectorProps {
   questions: Question[];
-  selectedQuestionIds: string[];
-  onToggleQuestion: (questionId: string) => void;
+  selectedQuestionIds: string[]; // For backward compatibility (multi mode)
+  selectedQuestionId?: string; // For single mode
+  mode?: 'multi' | 'single';
+  onToggleQuestion: (questionId: string) => void; // For multi mode
+  onSelectQuestion?: (questionId: string) => void; // For single mode
   isLoading?: boolean;
 }
 
 export function QuestionSelector({
   questions,
   selectedQuestionIds,
+  selectedQuestionId,
+  mode = 'multi',
   onToggleQuestion,
+  onSelectQuestion,
   isLoading = false,
 }: QuestionSelectorProps) {
   if (isLoading) {
@@ -41,10 +47,22 @@ export function QuestionSelector({
     );
   }
 
+  const isSingleMode = mode === 'single';
+  const handleQuestionClick = (questionId: string) => {
+    if (isLoading) return;
+    if (isSingleMode && onSelectQuestion) {
+      onSelectQuestion(questionId);
+    } else {
+      onToggleQuestion(questionId);
+    }
+  };
+
   return (
     <div className="w-full space-y-3">
       {questions.map((question) => {
-        const isSelected = selectedQuestionIds.includes(question.id);
+        const isSelected = isSingleMode
+          ? selectedQuestionId === question.id
+          : selectedQuestionIds.includes(question.id);
 
         return (
           <Card
@@ -53,17 +71,21 @@ export function QuestionSelector({
               'cursor-pointer transition-all hover:border-primary/50',
               isSelected && 'border-primary bg-accent/50'
             )}
-            onClick={() => !isLoading && onToggleQuestion(question.id)}
+            onClick={() => handleQuestionClick(question.id)}
           >
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <input
-                  type="checkbox"
+                  type={isSingleMode ? 'radio' : 'checkbox'}
                   checked={isSelected}
-                  onChange={() => onToggleQuestion(question.id)}
+                  onChange={() => handleQuestionClick(question.id)}
                   onClick={(e) => e.stopPropagation()}
                   disabled={isLoading}
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer disabled:cursor-not-allowed"
+                  name={isSingleMode ? 'question-selection' : undefined}
+                  className={cn(
+                    'mt-1 h-4 w-4 text-primary focus:ring-primary cursor-pointer disabled:cursor-not-allowed',
+                    isSingleMode ? 'rounded-full' : 'rounded border-gray-300'
+                  )}
                   aria-label={`Select question: ${question.question_text}`}
                 />
                 <label

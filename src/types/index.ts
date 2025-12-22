@@ -94,3 +94,18 @@ export interface PlayerAnswer {
 export interface PlayerAnswerWithQuestion extends PlayerAnswer {
   questions: Question;
 }
+
+export interface ExtractedTrack {
+  id: string;
+  game_player_id: string;
+  track_id: string;
+  track_name: string;
+  artist_name: string;
+  album_name: string | null;
+  album_image_url: string | null;
+  release_year: string | null;
+  external_url: string;
+  preview_url: string | null;
+  source: 'saved' | 'top';
+  created_at: string;
+}
