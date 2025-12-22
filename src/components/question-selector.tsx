@@ -2,6 +2,10 @@
 
 import { Question } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 interface QuestionSelectorProps {
@@ -25,11 +29,14 @@ export function QuestionSelector({
 }: QuestionSelectorProps) {
   if (isLoading) {
     return (
-      <div className="w-full space-y-4">
+      <div className="w-full space-y-3">
         {[1, 2, 3, 4, 5].map((i) => (
-          <Card key={i} className="animate-pulse">
+          <Card key={i}>
             <CardContent className="p-4">
-              <div className="h-6 bg-muted rounded w-3/4" />
+              <div className="flex items-start gap-3">
+                <Skeleton className="h-4 w-4 mt-1 rounded" />
+                <Skeleton className="h-5 flex-1" />
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -48,22 +55,63 @@ export function QuestionSelector({
   }
 
   const isSingleMode = mode === 'single';
-  const handleQuestionClick = (questionId: string) => {
-    if (isLoading) return;
-    if (isSingleMode && onSelectQuestion) {
-      onSelectQuestion(questionId);
-    } else {
-      onToggleQuestion(questionId);
-    }
-  };
+
+  if (isSingleMode) {
+    return (
+      <RadioGroup
+        value={selectedQuestionId || undefined}
+        onValueChange={(value) => {
+          if (onSelectQuestion && value) {
+            onSelectQuestion(value);
+          }
+        }}
+        disabled={isLoading}
+        className="w-full space-y-3"
+      >
+        {questions.map((question) => {
+          const isSelected = selectedQuestionId === question.id;
+          return (
+            <Card
+              key={question.id}
+              className={cn(
+                'cursor-pointer transition-all hover:border-primary/50',
+                isSelected && 'border-primary bg-accent/50'
+              )}
+              onClick={() => {
+                if (!isLoading && onSelectQuestion) {
+                  onSelectQuestion(question.id);
+                }
+              }}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <RadioGroupItem
+                    value={question.id}
+                    id={`question-${question.id}`}
+                    className="mt-1"
+                    disabled={isLoading}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <Label
+                    htmlFor={`question-${question.id}`}
+                    className="flex-1 text-sm font-medium leading-relaxed cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {question.question_text}
+                  </Label>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </RadioGroup>
+    );
+  }
 
   return (
     <div className="w-full space-y-3">
       {questions.map((question) => {
-        const isSelected = isSingleMode
-          ? selectedQuestionId === question.id
-          : selectedQuestionIds.includes(question.id);
-
+        const isSelected = selectedQuestionIds.includes(question.id);
         return (
           <Card
             key={question.id}
@@ -71,29 +119,33 @@ export function QuestionSelector({
               'cursor-pointer transition-all hover:border-primary/50',
               isSelected && 'border-primary bg-accent/50'
             )}
-            onClick={() => handleQuestionClick(question.id)}
+            onClick={() => {
+              if (!isLoading) {
+                onToggleQuestion(question.id);
+              }
+            }}
           >
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
-                <input
-                  type={isSingleMode ? 'radio' : 'checkbox'}
+                <Checkbox
                   checked={isSelected}
-                  onChange={() => handleQuestionClick(question.id)}
-                  onClick={(e) => e.stopPropagation()}
+                  onCheckedChange={() => {
+                    if (!isLoading) {
+                      onToggleQuestion(question.id);
+                    }
+                  }}
+                  id={`question-${question.id}`}
+                  className="mt-1"
                   disabled={isLoading}
-                  name={isSingleMode ? 'question-selection' : undefined}
-                  className={cn(
-                    'mt-1 h-4 w-4 text-primary focus:ring-primary cursor-pointer disabled:cursor-not-allowed',
-                    isSingleMode ? 'rounded-full' : 'rounded border-gray-300'
-                  )}
-                  aria-label={`Select question: ${question.question_text}`}
+                  onClick={(e) => e.stopPropagation()}
                 />
-                <label
+                <Label
+                  htmlFor={`question-${question.id}`}
                   className="flex-1 text-sm font-medium leading-relaxed cursor-pointer"
                   onClick={(e) => e.stopPropagation()}
                 >
                   {question.question_text}
-                </label>
+                </Label>
               </div>
             </CardContent>
           </Card>

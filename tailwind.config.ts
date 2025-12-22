@@ -51,15 +51,6 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Custom colors for Tracks theme
-        spotify: {
-          green: "#1DB954",
-          "green-dark": "#1ed760",
-        },
-        tracks: {
-          purple: "#667eea",
-          "purple-dark": "#5568d3",
-        },
       },
       borderRadius: {
         lg: "var(--radius)",

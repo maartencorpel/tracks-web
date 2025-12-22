@@ -5,9 +5,14 @@ import { SpotifyTrack } from '@/lib/spotify-search';
 import { TrackList } from '@/components/track-list';
 import { CustomTrackInput } from '@/components/custom-track-input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Separator } from '@/components/ui/separator';
 
 interface TrackSelectionSidebarProps {
   isOpen: boolean;
@@ -43,30 +48,6 @@ export function TrackSelectionSidebar({
     }
   }, [isOpen]);
 
-  // Handle ESC key to close sidebar
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
-
-  // Prevent body scroll when sidebar is open on mobile
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
-
   const handleTrackSelect = (track: SpotifyTrack) => {
     onSelectTrack(track);
     onClose();
@@ -77,48 +58,21 @@ export function TrackSelectionSidebar({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <>
-      {/* Overlay backdrop - mobile only */}
-      <div
-        className="fixed inset-0 bg-black/50 z-40 md:hidden"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Sidebar */}
-      <div
-        className={cn(
-          'fixed inset-0 z-50 md:inset-auto md:right-0 md:top-0 md:h-full md:w-[400px]',
-          'bg-background border-l shadow-lg transition-transform duration-300 ease-in-out',
-          'flex flex-col',
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        )}
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent
+        side="right"
+        className="w-full md:w-[400px] flex flex-col p-0"
       >
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 p-4 border-b shrink-0">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-semibold">Select Track</h2>
-            {questionText && (
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                {questionText}
-              </p>
-            )}
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="shrink-0"
-            aria-label="Close sidebar"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+        <SheetHeader className="p-4 border-b shrink-0">
+          <SheetTitle>Select Track</SheetTitle>
+          {questionText && (
+            <SheetDescription className="line-clamp-2">
+              {questionText}
+            </SheetDescription>
+          )}
+        </SheetHeader>
 
-        {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
           {showCustomInput ? (
             accessToken ? (
@@ -139,19 +93,22 @@ export function TrackSelectionSidebar({
                 error={error}
               />
               {accessToken && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowCustomInput(true)}
-                  className="w-full"
-                >
-                  Can't find your track? Add custom track
-                </Button>
+                <>
+                  <Separator />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowCustomInput(true)}
+                    className="w-full"
+                  >
+                    Can't find your track? Add custom track
+                  </Button>
+                </>
               )}
             </div>
           )}
         </div>
-      </div>
-    </>
+      </SheetContent>
+    </Sheet>
   );
 }

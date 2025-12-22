@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 
 export default function ReturnPage() {
   useEffect(() => {
@@ -10,15 +11,12 @@ export default function ReturnPage() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[#191414] text-white">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
       <h1 className="text-3xl font-bold mb-4">Returning to Tracks...</h1>
-      <p className="opacity-80 mb-6">If you're not redirected automatically,</p>
-      <a 
-        href="tracks://return" 
-        className="px-6 py-3 bg-[#1DB954] text-white rounded-full font-semibold hover:bg-[#1ed760] transition-colors"
-      >
-        Tap here to return
-      </a>
+      <p className="text-muted-foreground mb-6">If you're not redirected automatically,</p>
+      <Button asChild className="rounded-full">
+        <a href="tracks://return">Tap here to return</a>
+      </Button>
     </div>
   );
 }

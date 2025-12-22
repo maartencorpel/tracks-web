@@ -5,6 +5,14 @@ import { SpotifyTrack } from '@/lib/spotify-search';
 import { TrackCard } from '@/components/track-card';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { SEARCH_DEBOUNCE_MS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
@@ -85,24 +93,22 @@ export function TrackList({
           />
         </div>
         <div className="w-40">
-          <select
+          <Select
             value={sortBy}
-            onChange={(e) =>
-              setSortBy(e.target.value as 'title' | 'artist' | 'year')
+            onValueChange={(value) =>
+              setSortBy(value as 'title' | 'artist' | 'year')
             }
             disabled={isLoading}
-            className={cn(
-              'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-              'disabled:cursor-not-allowed disabled:opacity-50',
-              'cursor-pointer'
-            )}
-            aria-label="Sort tracks"
           >
-            <option value="title">Sort by Title</option>
-            <option value="artist">Sort by Artist</option>
-            <option value="year">Sort by Year</option>
-          </select>
+            <SelectTrigger aria-label="Sort tracks">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="title">Sort by Title</SelectItem>
+              <SelectItem value="artist">Sort by Artist</SelectItem>
+              <SelectItem value="year">Sort by Year</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -115,9 +121,20 @@ export function TrackList({
 
       {/* Loading State */}
       {isLoading && (
-        <div className="text-center py-8">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">Loading tracks...</p>
+        <div className="space-y-2 max-h-96 overflow-y-auto">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="p-4 border rounded-lg space-y-3">
+              <div className="flex gap-4">
+                <Skeleton className="h-16 w-16 rounded" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-3 w-2/3" />
+                </div>
+                <Skeleton className="h-9 w-20" />
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

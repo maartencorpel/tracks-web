@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { TrackSelectionSidebar } from '@/components/track-selection-sidebar';
 import { TrackPreview } from '@/components/track-preview';
@@ -530,7 +532,9 @@ function TracksPageContent() {
                       )}
                     </div>
                     {selectedTrack && question && (
-                      <div className="shrink-0 text-primary">✓</div>
+                      <Badge variant="default" className="shrink-0">
+                        Complete
+                      </Badge>
                     )}
                     <Button
                       variant="ghost"

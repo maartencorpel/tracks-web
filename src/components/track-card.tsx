@@ -4,6 +4,7 @@ import { memo } from 'react';
 import { SpotifyTrack } from '@/lib/spotify-search';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { ExternalLink } from 'lucide-react';
 
@@ -61,15 +62,22 @@ function TrackCardComponent({
           {/* Track Info */}
           <div className="flex-1 min-w-0 space-y-1">
             <div>
-              <h4
-                className={cn(
-                  'font-medium text-sm truncate',
-                  isSelected && 'text-primary'
+              <div className="flex items-center gap-2">
+                <h4
+                  className={cn(
+                    'font-medium text-sm truncate',
+                    isSelected && 'text-primary'
+                  )}
+                  title={track.name}
+                >
+                  {track.name}
+                </h4>
+                {isSelected && (
+                  <Badge variant="secondary" className="text-xs">
+                    Selected
+                  </Badge>
                 )}
-                title={track.name}
-              >
-                {track.name}
-              </h4>
+              </div>
               <p className="text-xs text-muted-foreground truncate" title={artistNames}>
                 {artistNames}
               </p>

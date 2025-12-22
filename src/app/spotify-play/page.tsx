@@ -23,35 +23,20 @@ function SpotifyPlayContent() {
 
   if (!trackUrl) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#1DB954] to-[#191414]">
-        <div className="text-center text-white">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-primary to-background">
+        <div className="text-center text-foreground">
           <h1 className="text-2xl font-bold mb-4">Error: No track URL provided</h1>
-          <p className="opacity-80">Please use a valid Spotify track link</p>
+          <p className="text-muted-foreground">Please use a valid Spotify track link</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#1DB954] to-[#191414] text-white">
-      <div className="spinner mb-6"></div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-primary to-background text-foreground">
+      <div className="h-12 w-12 border-4 border-muted border-t-primary rounded-full animate-spin mb-6" />
       <h1 className="text-3xl font-bold mb-2">Opening Spotify...</h1>
-      <p className="opacity-80">You'll be redirected back automatically</p>
-      
-      <style jsx>{`
-        .spinner {
-          width: 50px;
-          height: 50px;
-          border: 3px solid rgba(255, 255, 255, 0.3);
-          border-radius: 50%;
-          border-top-color: #1DB954;
-          animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+      <p className="text-muted-foreground">You'll be redirected back automatically</p>
     </div>
   );
 }
@@ -60,24 +45,9 @@ function SpotifyPlayContent() {
 export default function SpotifyPlayPage() {
   return (
     <Suspense fallback={
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#1DB954] to-[#191414] text-white">
-        <div className="spinner mb-6"></div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-primary to-background text-foreground">
+        <div className="h-12 w-12 border-4 border-muted border-t-primary rounded-full animate-spin mb-6" />
         <h1 className="text-3xl font-bold mb-2">Loading...</h1>
-        
-        <style jsx>{`
-          .spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #1DB954;
-            animation: spin 1s linear infinite;
-          }
-          
-          @keyframes spin {
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     }>
       <SpotifyPlayContent />
