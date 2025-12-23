@@ -28,9 +28,9 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-xl">Enter Game Code</CardTitle>
+        <CardTitle className="text-xl">Join Game</CardTitle>
         <CardDescription className="text-base">
-          Ask the host for the game code and enter it below
+          Enter game code and login with Spotify to join the game
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -42,9 +42,9 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
             inputMode="numeric"
             onChange={(value) => setGameId(value)}
             disabled={isLoading}
-            className="gap-2"
+            containerClassName="flex items-center has-[:disabled]:opacity-50"
           >
-            <InputOTPGroup className="gap-2">
+            <InputOTPGroup>
               <InputOTPSlot index={0} className="w-12 h-12 text-lg font-mono" />
               <InputOTPSlot index={1} className="w-12 h-12 text-lg font-mono" />
               <InputOTPSlot index={2} className="w-12 h-12 text-lg font-mono" />
@@ -66,7 +66,7 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
             </>
           ) : (
             <>
-              🎮 Join Game
+              Login with Spotify
             </>
           )}
         </Button>

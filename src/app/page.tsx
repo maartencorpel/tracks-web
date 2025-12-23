@@ -134,12 +134,6 @@ function HomePageContent() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        {/* Logo and Title */}
-        <div className="text-center space-y-4">
-          <h1 className="text-3xl font-bold mb-2">Join Tracks Game</h1>
-          <p className="text-muted-foreground text-lg">Connect with friends and discover music together</p>
-        </div>
-
         {/* Game ID Display */}
         {gameId && (
           <Card>
@@ -173,21 +167,6 @@ function HomePageContent() {
             message={errorMessage}
             onRetry={showGameInput ? () => setShowGameInput(true) : undefined}
           />
-        )}
-
-        {/* Info Section */}
-        {showGameInput && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">How it works</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-sm text-muted-foreground space-y-2">
-                <p>Enter the game code shared by the host to join the game.</p>
-                <p>You'll be redirected to Spotify to authenticate and join.</p>
-              </div>
-            </CardContent>
-          </Card>
         )}
       </div>
     </div>
