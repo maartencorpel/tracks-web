@@ -471,7 +471,7 @@ function UpdateAnswersPageContent() {
                       />
                     </div>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
                       onClick={() => handleRemoveQuestion(questionId)}
                       disabled={isSaving || isDeletingQuestion}
@@ -548,7 +548,7 @@ function UpdateAnswersPageContent() {
                         />
                       </div>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
                         onClick={() => handleRemoveNewQuestion(index)}
                         className="shrink-0"

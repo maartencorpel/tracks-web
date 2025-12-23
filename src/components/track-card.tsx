@@ -38,14 +38,14 @@ function TrackCardComponent({
     <Card
       onClick={handleSelect}
       className={cn(
-        'transition-all hover:border-primary/50',
+        'transition-all hover:border-primary/50 rounded-none border-0 bg-transparent shadow-none',
         isSelected && 'border-primary bg-accent/50',
         !isLoading && !isSelected && 'cursor-pointer',
         (isLoading || isSelected) && 'cursor-default'
       )}
     >
-      <CardContent className="p-4">
-        <div className="flex gap-4">
+      <CardContent className="p-0">
+        <div className="flex items-center gap-3 justify-start h-fit">
           {/* Album Art */}
           <div className="shrink-0">
             {albumImage ? (

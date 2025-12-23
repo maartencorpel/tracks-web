@@ -3,7 +3,7 @@
 import { SpotifyTrack } from '@/lib/spotify-search';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, ChevronRight } from 'lucide-react';
 
 interface TrackPreviewProps {
   track: SpotifyTrack;
@@ -20,7 +20,7 @@ export function TrackPreview({
   const artistNames = track.artists.map((a) => a.name).join(', ');
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+    <div className="flex items-center gap-3 justify-start h-auto">
       {/* Album Art */}
       <div className="shrink-0">
         {albumImage ? (
@@ -63,13 +63,14 @@ export function TrackPreview({
         <Button
           onClick={onChange}
           disabled={isLoading}
-          size="sm"
+          size="icon"
           variant="outline"
+          className="rounded-full"
         >
           {isLoading ? (
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
           ) : (
-            'Change'
+            <ChevronRight className="h-4 w-4" />
           )}
         </Button>
       </div>

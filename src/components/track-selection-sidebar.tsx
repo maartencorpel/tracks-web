@@ -64,14 +64,12 @@ export function TrackSelectionSidebar({
         className="w-full md:w-[400px] flex flex-col p-0 h-full overflow-hidden gap-0"
       >
         <SheetHeader className="p-4 border-b shrink-0">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col items-start justify-between gap-4">
             <div className="flex-1">
-              <SheetTitle>Select Track</SheetTitle>
-              {questionText && (
-                <SheetDescription className="line-clamp-2">
-                  {questionText}
-                </SheetDescription>
-              )}
+              <SheetTitle>{questionText || 'Select Track'}</SheetTitle>
+              <SheetDescription>
+                Select a track from the list or add a custom track.
+              </SheetDescription>
             </div>
             {accessToken && !showCustomInput && (
               <Button

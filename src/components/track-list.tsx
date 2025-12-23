@@ -65,7 +65,7 @@ export function TrackList({
           }
           disabled={isLoading}
         >
-          <SelectTrigger aria-label="Sort tracks" className="w-40">
+          <SelectTrigger aria-label="Sort tracks" className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
