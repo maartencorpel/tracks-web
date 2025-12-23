@@ -64,7 +64,7 @@ export function TrackSelectionSidebar({
         className="w-full md:w-[400px] flex flex-col p-0 h-full overflow-hidden gap-0"
       >
         <SheetHeader className="p-4 border-b shrink-0">
-          <div className="flex flex-col items-start justify-between gap-4">
+          <div className="flex flex-col items-start justify-between gap-2">
             <div className="flex-1">
               <SheetTitle>{questionText || 'Select Track'}</SheetTitle>
               <SheetDescription>
@@ -84,7 +84,7 @@ export function TrackSelectionSidebar({
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 min-h-0 track-list-scroll">
+        <div className="flex-1 overflow-y-auto px-3 pb-5 min-h-0 track-list-scroll">
           {showCustomInput ? (
             accessToken ? (
               <CustomTrackInput

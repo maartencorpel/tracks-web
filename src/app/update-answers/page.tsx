@@ -432,7 +432,7 @@ function UpdateAnswersPageContent() {
 
   return (
     <div className="min-h-screen bg-background p-4 pb-4">
-      <div className="max-w-md mx-auto space-y-6">
+      <div className="max-w-md mx-auto space-y-3 flex flex-col">
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold">Update Your Answers</h1>
@@ -458,8 +458,8 @@ function UpdateAnswersPageContent() {
 
             return (
               <Card key={questionId}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       <QuestionDropdown
                         questions={allQuestions}
@@ -486,7 +486,7 @@ function UpdateAnswersPageContent() {
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="px-3 pb-5 space-y-4">
                   {selectedTrack ? (
                     <TrackPreview
                       track={selectedTrack}
@@ -535,8 +535,8 @@ function UpdateAnswersPageContent() {
 
               return (
                 <Card key={index}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
                         <QuestionDropdown
                           questions={allQuestions}
@@ -558,7 +558,7 @@ function UpdateAnswersPageContent() {
                       </Button>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="px-3 pb-5 space-y-4">
                     {question && questionId ? (
                       selectedTrack ? (
                         <TrackPreview

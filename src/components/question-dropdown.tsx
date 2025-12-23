@@ -38,7 +38,7 @@ export function QuestionDropdown({
       onValueChange={handleValueChange}
       disabled={disabled}
     >
-      <SelectTrigger aria-label="Select a question">
+      <SelectTrigger aria-label="Select a question" className="bg-transparent">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

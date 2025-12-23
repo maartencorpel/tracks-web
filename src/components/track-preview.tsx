@@ -18,9 +18,12 @@ export function TrackPreview({
 }: TrackPreviewProps) {
   const albumImage = track.album.images?.[0]?.url || null;
   const artistNames = track.artists.map((a) => a.name).join(', ');
+  const releaseYear = track.album.release_date
+    ? track.album.release_date.substring(0, 4)
+    : 'Unknown';
 
   return (
-    <div className="flex items-center gap-3 justify-start h-auto">
+    <div className="flex items-center gap-3 justify-start h-auto py-1 px-3">
       {/* Album Art */}
       <div className="shrink-0">
         {albumImage ? (
@@ -37,28 +40,46 @@ export function TrackPreview({
       </div>
 
       {/* Track Info */}
-      <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-sm truncate" title={track.name}>
-          {track.name}
-        </h4>
-        <p className="text-xs text-muted-foreground truncate" title={artistNames}>
-          {artistNames}
-        </p>
+      <div className="flex-1 min-w-0 space-y-1">
+        <div>
+          <h4 className="font-medium text-sm truncate" title={track.name}>
+            {track.name}
+          </h4>
+          <p className="text-xs text-muted-foreground truncate" title={artistNames}>
+            {artistNames}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="font-medium">{releaseYear}</span>
+          {track.album.name && (
+            <>
+              <span>•</span>
+              <span className="truncate" title={track.album.name}>
+                {track.album.name}
+              </span>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Actions */}
       <div className="shrink-0 flex items-center gap-2">
         {track.external_urls.spotify && (
-          <a
-            href={track.external_urls.spotify}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-            aria-label={`Open ${track.name} on Spotify`}
-            onClick={(e) => e.stopPropagation()}
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
           >
-            <ExternalLink className="w-4 h-4" />
-          </a>
+            <a
+              href={track.external_urls.spotify}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Open ${track.name} on Spotify`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </Button>
         )}
         <Button
           onClick={onChange}
