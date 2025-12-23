@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   InputOTP,
   InputOTPGroup,
@@ -14,10 +14,13 @@ interface GameCodeInputProps {
   onJoin: (gameId: string) => void;
   isLoading?: boolean;
   initialGameId?: string;
+  hasError?: boolean;
 }
 
-export function GameCodeInput({ onJoin, isLoading = false, initialGameId }: GameCodeInputProps) {
+export function GameCodeInput({ onJoin, isLoading = false, initialGameId, hasError = false }: GameCodeInputProps) {
   const [gameId, setGameId] = useState(initialGameId || '');
+  const inputOTPRef = useRef<React.ElementRef<typeof InputOTP>>(null);
+  const prevHasErrorRef = useRef(hasError);
   
   // Sync with prop changes
   useEffect(() => {
@@ -25,6 +28,37 @@ export function GameCodeInput({ onJoin, isLoading = false, initialGameId }: Game
       setGameId(initialGameId);
     }
   }, [initialGameId]);
+
+  // Clear input and refocus when error occurs
+  useEffect(() => {
+    // Check if error state changed from false to true
+    if (hasError && !prevHasErrorRef.current && !isLoading) {
+      setGameId('');
+      // Small delay to ensure the input is cleared before focusing
+      const timer = setTimeout(() => {
+        const inputElement = inputOTPRef.current?.querySelector('input[data-input-otp]') as HTMLInputElement;
+        if (inputElement) {
+          inputElement.focus();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+    prevHasErrorRef.current = hasError;
+  }, [hasError, isLoading]);
+
+  // Auto-focus first input on mount and when not loading
+  useEffect(() => {
+    if (!isLoading && !hasError && inputOTPRef.current) {
+      // Small delay to ensure the component is fully rendered
+      const timer = setTimeout(() => {
+        const inputElement = inputOTPRef.current?.querySelector('input[data-input-otp]') as HTMLInputElement;
+        if (inputElement) {
+          inputElement.focus();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, hasError]);
 
   const handleSubmit = () => {
     if (gameId.length === 4) {
@@ -43,6 +77,7 @@ export function GameCodeInput({ onJoin, isLoading = false, initialGameId }: Game
       <CardContent className="space-y-6">
         <div className="flex justify-center w-full h-[120px]">
           <InputOTP
+            ref={inputOTPRef}
             maxLength={4}
             value={gameId}
             pattern={REGEXP_ONLY_DIGITS}
@@ -50,6 +85,7 @@ export function GameCodeInput({ onJoin, isLoading = false, initialGameId }: Game
             onChange={(value) => setGameId(value)}
             disabled={isLoading}
             containerClassName="flex items-center has-[:disabled]:opacity-50 w-full h-full"
+            autoFocus
           >
             <InputOTPGroup className="w-full">
               <InputOTPSlot index={0} className="flex-1 h-full text-[32px] font-semibold font-mono" />

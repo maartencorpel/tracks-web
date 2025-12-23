@@ -64,5 +64,23 @@
     width: 100% !important;
     height: 100% !important;
   }
+  
+  /* Transparent scrollbar for track selection sidebar */
+  .track-list-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .track-list-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .track-list-scroll::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  
+  .track-list-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
 }
 

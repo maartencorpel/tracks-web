@@ -146,6 +146,7 @@ function HomePageContent() {
               onJoin={handleJoinWithGameId}
               isLoading={joinState === 'verifying'}
               initialGameId={gameId}
+              hasError={joinState === 'error'}
             />
             
             {/* Error Alert below card */}

@@ -3,7 +3,6 @@
 import { memo } from 'react';
 import { SpotifyTrack } from '@/lib/spotify-search';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { ExternalLink } from 'lucide-react';
@@ -13,7 +12,7 @@ interface TrackCardProps {
   onSelect: (track: SpotifyTrack) => void;
   isSelected?: boolean;
   isLoading?: boolean;
-  hideSelectButton?: boolean;
+  hideSelectButton?: boolean; // Kept for backward compatibility but no longer used
 }
 
 function TrackCardComponent({
@@ -21,7 +20,7 @@ function TrackCardComponent({
   onSelect,
   isSelected = false,
   isLoading = false,
-  hideSelectButton = false,
+  hideSelectButton = false, // Kept for backward compatibility but no longer used
 }: TrackCardProps) {
   const albumImage = track.album.images?.[0]?.url || null;
   const artistNames = track.artists.map((a) => a.name).join(', ');
@@ -37,9 +36,12 @@ function TrackCardComponent({
 
   return (
     <Card
+      onClick={handleSelect}
       className={cn(
         'transition-all hover:border-primary/50',
-        isSelected && 'border-primary bg-accent/50'
+        isSelected && 'border-primary bg-accent/50',
+        !isLoading && !isSelected && 'cursor-pointer',
+        (isLoading || isSelected) && 'cursor-default'
       )}
     >
       <CardContent className="p-4">
@@ -108,22 +110,6 @@ function TrackCardComponent({
               >
                 <ExternalLink className="w-4 h-4" />
               </a>
-            )}
-            {!hideSelectButton && (
-              <Button
-                onClick={handleSelect}
-                disabled={isLoading || isSelected}
-                size="sm"
-                variant={isSelected ? 'secondary' : 'default'}
-              >
-                {isLoading ? (
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                ) : isSelected ? (
-                  'Selected'
-                ) : (
-                  'Select'
-                )}
-              </Button>
             )}
           </div>
         </div>

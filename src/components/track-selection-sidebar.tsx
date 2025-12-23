@@ -12,7 +12,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { Separator } from '@/components/ui/separator';
 
 interface TrackSelectionSidebarProps {
   isOpen: boolean;
@@ -62,18 +61,32 @@ export function TrackSelectionSidebar({
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="w-full md:w-[400px] flex flex-col p-0 h-full overflow-hidden"
+        className="w-full md:w-[400px] flex flex-col p-0 h-full overflow-hidden gap-0"
       >
         <SheetHeader className="p-4 border-b shrink-0">
-          <SheetTitle>Select Track</SheetTitle>
-          {questionText && (
-            <SheetDescription className="line-clamp-2">
-              {questionText}
-            </SheetDescription>
-          )}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <SheetTitle>Select Track</SheetTitle>
+              {questionText && (
+                <SheetDescription className="line-clamp-2">
+                  {questionText}
+                </SheetDescription>
+              )}
+            </div>
+            {accessToken && !showCustomInput && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCustomInput(true)}
+                className="shrink-0"
+              >
+                Add Custom Track
+              </Button>
+            )}
+          </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto p-4 min-h-0">
+        <div className="flex-1 overflow-y-auto p-4 min-h-0 track-list-scroll">
           {showCustomInput ? (
             accessToken ? (
               <CustomTrackInput
@@ -84,28 +97,13 @@ export function TrackSelectionSidebar({
               />
             ) : null
           ) : (
-            <div className="space-y-4">
-              <TrackList
-                tracks={tracks}
-                selectedTrackId={selectedTrackId}
-                onSelectTrack={handleTrackSelect}
-                isLoading={isLoading}
-                error={error}
-              />
-              {accessToken && (
-                <>
-                  <Separator />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowCustomInput(true)}
-                    className="w-full"
-                  >
-                    Can't find your track? Add custom track
-                  </Button>
-                </>
-              )}
-            </div>
+            <TrackList
+              tracks={tracks}
+              selectedTrackId={selectedTrackId}
+              onSelectTrack={handleTrackSelect}
+              isLoading={isLoading}
+              error={error}
+            />
           )}
         </div>
       </SheetContent>

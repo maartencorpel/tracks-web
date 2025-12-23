@@ -124,9 +124,9 @@ export function CustomTrackInput({
               <p className="text-sm font-medium mb-2">Track Preview:</p>
               <TrackCard
                 track={fetchedTrack}
-                onSelect={() => {}}
+                onSelect={handleConfirm}
                 isSelected={false}
-                hideSelectButton={true}
+                isLoading={isLoading}
               />
             </div>
             <div className="flex gap-2">
