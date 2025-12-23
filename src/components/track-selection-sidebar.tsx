@@ -62,7 +62,7 @@ export function TrackSelectionSidebar({
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="w-full md:w-[400px] flex flex-col p-0"
+        className="w-full md:w-[400px] flex flex-col p-0 h-full overflow-hidden"
       >
         <SheetHeader className="p-4 border-b shrink-0">
           <SheetTitle>Select Track</SheetTitle>
@@ -73,7 +73,7 @@ export function TrackSelectionSidebar({
           )}
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 min-h-0">
           {showCustomInput ? (
             accessToken ? (
               <CustomTrackInput

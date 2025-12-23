@@ -419,16 +419,8 @@ function TracksPageContent() {
     setSlots((prev) => prev.filter((_, index) => index !== slotIndex));
   }, []);
 
-  const handleComplete = () => {
-    const completedSlots = slots.filter((s) => s.questionId && s.track);
-    if (completedSlots.length > 0 && gameId) {
-      router.push(`/success?gameId=${gameId}`);
-    }
-  };
-
   const completedSlots = slots.filter((s) => s.questionId && s.track);
   const completedCount = completedSlots.length;
-  const canComplete = completedCount > 0;
   const progressPercentage = MINIMUM_QUESTIONS > 0 ? Math.min((completedCount / MINIMUM_QUESTIONS) * 100, 100) : 0;
 
   // Get all selected question IDs (excluding nulls) for dropdown exclusion
@@ -468,7 +460,7 @@ function TracksPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-24">
+    <div className="min-h-screen bg-background p-4 pb-4">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
@@ -592,20 +584,6 @@ function TracksPageContent() {
         >
           Add Another Question
         </Button>
-
-        {/* Complete Button */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-10">
-          <div className="max-w-4xl mx-auto">
-            <Button
-              onClick={handleComplete}
-              disabled={!canComplete}
-              className="w-full"
-              size="lg"
-            >
-              Complete Selection
-            </Button>
-          </div>
-        </div>
 
         {/* Track Selection Sidebar */}
         {sidebarSlotIndex !== null && (

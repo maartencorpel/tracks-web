@@ -2,10 +2,8 @@
 
 import { useState, useEffect, Suspense, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AnswerSummary } from '@/components/answer-summary';
 import { QuestionDropdown } from '@/components/question-dropdown';
 import { TrackSelectionSidebar } from '@/components/track-selection-sidebar';
 import { TrackPreview } from '@/components/track-preview';
@@ -20,6 +18,7 @@ import { trackPageView, trackError } from '@/lib/analytics';
 import { Question, PlayerAnswerWithQuestion } from '@/types';
 import { cn } from '@/lib/utils';
 import { QUESTIONS_CACHE_TTL_MS } from '@/lib/constants';
+import { Minus } from 'lucide-react';
 
 function UpdateAnswersPageContent() {
   const searchParams = useSearchParams();
@@ -42,16 +41,21 @@ function UpdateAnswersPageContent() {
   const [answers, setAnswers] = useState<Record<string, SpotifyTrack>>({});
   const [answeredQuestionIds, setAnsweredQuestionIds] = useState<string[]>([]);
   const [selectedNewQuestionIds, setSelectedNewQuestionIds] = useState<Array<string | null>>([]);
-  const [changingQuestionId, setChangingQuestionId] = useState<string | null>(null);
   
   // Sidebar state
   const [sidebarQuestionId, setSidebarQuestionId] = useState<string | null>(null);
-  const [showCustomInSidebar, setShowCustomInSidebar] = useState(false);
 
   // Loading states
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
   const [isDeleting, setIsDeleting] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Memoized question lookup map for O(1) access
+  const questionsMap = useMemo(() => {
+    const map = new Map<string, Question>();
+    allQuestions.forEach(q => map.set(q.id, q));
+    return map;
+  }, [allQuestions]);
 
   // Initialize data on mount
   useEffect(() => {
@@ -205,7 +209,6 @@ function UpdateAnswersPageContent() {
       // Optimistic UI update
       setAnswers((prev) => ({ ...prev, [questionId]: track }));
       setSavingStates((prev) => ({ ...prev, [questionId]: true }));
-      setChangingQuestionId(null);
       setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[questionId];
@@ -241,7 +244,6 @@ function UpdateAnswersPageContent() {
         // Close sidebar after successful save
         if (sidebarQuestionId === questionId) {
           setSidebarQuestionId(null);
-          setShowCustomInSidebar(false);
         }
       }
     },
@@ -250,7 +252,6 @@ function UpdateAnswersPageContent() {
 
   const handleOpenSidebar = useCallback((questionId: string) => {
     setSidebarQuestionId(questionId);
-    setShowCustomInSidebar(false);
     setErrors((prev) => {
       const newErrors = { ...prev };
       delete newErrors[questionId];
@@ -260,7 +261,6 @@ function UpdateAnswersPageContent() {
 
   const handleCloseSidebar = useCallback(() => {
     setSidebarQuestionId(null);
-    setShowCustomInSidebar(false);
   }, []);
 
   const handleSidebarTrackSelect = useCallback(
@@ -288,7 +288,6 @@ function UpdateAnswersPageContent() {
         // Close sidebar if open for this question
         if (sidebarQuestionId === questionId) {
           setSidebarQuestionId(null);
-          setShowCustomInSidebar(false);
         }
         return;
       }
@@ -379,7 +378,7 @@ function UpdateAnswersPageContent() {
         setIsDeleting((prev) => ({ ...prev, [questionId]: false }));
       }
     },
-    [gamePlayerId, answeredQuestionIds.length]
+    [gamePlayerId]
   );
 
   const handleAddQuestion = () => {
@@ -432,8 +431,8 @@ function UpdateAnswersPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 pb-24">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background p-4 pb-4">
+      <div className="max-w-md mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold">Update Your Answers</h1>
@@ -442,101 +441,74 @@ function UpdateAnswersPageContent() {
           </p>
         </div>
 
-        {/* Readiness Status */}
-        <AnswerSummary
-          answers={existingAnswers}
-          totalQuestions={answeredQuestionIds.length}
-        />
+        {/* Answered Questions */}
+        {answeredQuestionIds.length === 0 ? (
+          <p className="text-muted-foreground text-center py-4">
+            No answers yet. Add questions below to get started.
+          </p>
+        ) : (
+          answeredQuestionIds.map((questionId) => {
+            const question = questionsMap.get(questionId);
+            const selectedTrack = answers[questionId];
+            const isSaving = savingStates[questionId] || false;
+            const isDeletingQuestion = isDeleting[questionId] || false;
+            const questionError = errors[questionId];
 
-        {/* Current Answers */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Current Answers</CardTitle>
-            <CardDescription>
-              {answeredQuestionIds.length} question{answeredQuestionIds.length !== 1 ? 's' : ''} answered
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {answeredQuestionIds.length === 0 ? (
-              <p className="text-muted-foreground text-center py-4">
-                No answers yet. Add questions below to get started.
-              </p>
-            ) : (
-              answeredQuestionIds.map((questionId) => {
-                const question = allQuestions.find((q) => q.id === questionId);
-                const selectedTrack = answers[questionId];
-                const isChanging = changingQuestionId === questionId;
-                const isSaving = savingStates[questionId] || false;
-                const isDeletingQuestion = isDeleting[questionId] || false;
-                const questionError = errors[questionId];
+            if (!question) return null;
 
-                if (!question) return null;
-
-                return (
-                  <Card key={questionId} className={cn(selectedTrack && 'border-primary/50')}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-2">
-                          <QuestionDropdown
-                            questions={allQuestions}
-                            selectedQuestionId={questionId}
-                            excludedQuestionIds={answeredQuestionIds.filter((id) => id !== questionId)}
-                            onSelect={(newQuestionId) => handleQuestionChange(questionId, newQuestionId)}
-                            placeholder="Select a question..."
-                            disabled={isSaving || isDeletingQuestion || isChanging}
-                          />
-                          {selectedTrack && !isChanging && (
-                            <CardDescription className="mt-2">
-                              Selected: <span className="font-medium">{selectedTrack.name}</span> by{' '}
-                              {selectedTrack.artists[0]?.name}
-                            </CardDescription>
-                          )}
-                        </div>
-                        {selectedTrack && !isChanging && (
-                          <div className="shrink-0 text-primary">✓</div>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {!isChanging && selectedTrack ? (
-                        <>
-                          <TrackPreview
-                            track={selectedTrack}
-                            onChange={() => handleOpenSidebar(questionId)}
-                            isLoading={isSaving}
-                          />
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleRemoveQuestion(questionId)}
-                            disabled={isSaving || isDeletingQuestion}
-                            className="w-full"
-                          >
-                            {isDeletingQuestion ? (
-                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mx-auto" />
-                            ) : (
-                              'Remove Question'
-                            )}
-                          </Button>
-                        </>
-                      ) : !isChanging ? (
-                        <Button
-                          variant="outline"
-                          size="lg"
-                          onClick={() => handleOpenSidebar(questionId)}
-                          className="w-full"
-                          disabled={isSaving || isDeletingQuestion}
-                        >
-                          Select Track
-                        </Button>
-                      ) : null}
-                    </CardContent>
-                  </Card>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
+            return (
+              <Card key={questionId}>
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <QuestionDropdown
+                        questions={allQuestions}
+                        selectedQuestionId={questionId}
+                        excludedQuestionIds={answeredQuestionIds.filter((id) => id !== questionId)}
+                        onSelect={(newQuestionId) => handleQuestionChange(questionId, newQuestionId)}
+                        placeholder="Select a question..."
+                        disabled={isSaving || isDeletingQuestion}
+                      />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveQuestion(questionId)}
+                      disabled={isSaving || isDeletingQuestion}
+                      className="shrink-0"
+                      aria-label="Remove question"
+                    >
+                      {isDeletingQuestion ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      ) : (
+                        <Minus className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {selectedTrack ? (
+                    <TrackPreview
+                      track={selectedTrack}
+                      onChange={() => handleOpenSidebar(questionId)}
+                      isLoading={isSaving}
+                    />
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => handleOpenSidebar(questionId)}
+                      className="w-full"
+                      disabled={isSaving || isDeletingQuestion}
+                    >
+                      Select Track
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })
+        )}
 
         {/* Add Another Question Button */}
         <Button
@@ -550,7 +522,7 @@ function UpdateAnswersPageContent() {
         {/* New Questions Needing Tracks */}
         {selectedNewQuestionIds.length > 0 &&
           selectedNewQuestionIds.map((questionId, index) => {
-              const question = questionId ? allQuestions.find((q) => q.id === questionId) : null;
+              const question = questionId ? questionsMap.get(questionId) : null;
               const selectedTrack = questionId ? answers[questionId] : undefined;
               const isSaving = questionId ? (savingStates[questionId] || false) : false;
               const questionError = questionId ? errors[questionId] : undefined;
@@ -562,10 +534,10 @@ function UpdateAnswersPageContent() {
               ];
 
               return (
-                <Card key={index} className="border-primary">
+                <Card key={index}>
                   <CardHeader>
                     <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 space-y-2">
+                      <div className="flex-1">
                         <QuestionDropdown
                           questions={allQuestions}
                           selectedQuestionId={questionId}
@@ -574,20 +546,15 @@ function UpdateAnswersPageContent() {
                           placeholder="Select a question..."
                           disabled={isSaving}
                         />
-                        {question && selectedTrack && (
-                          <CardDescription className="mt-2">
-                            Selected: <span className="font-medium">{selectedTrack.name}</span> by{' '}
-                            {selectedTrack.artists[0]?.name}
-                          </CardDescription>
-                        )}
                       </div>
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={() => handleRemoveNewQuestion(index)}
                         className="shrink-0"
+                        aria-label="Remove question"
                       >
-                        Remove
+                        <Minus className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardHeader>
@@ -611,31 +578,10 @@ function UpdateAnswersPageContent() {
                         </Button>
                       )
                     ) : null}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveNewQuestion(index)}
-                      className="w-full"
-                    >
-                      Remove from List
-                    </Button>
                   </CardContent>
                 </Card>
               );
             })}
-
-        {/* Done Button */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-10">
-          <div className="max-w-4xl mx-auto">
-            <Button
-              onClick={() => router.push(`/success?gameId=${gameId}`)}
-              className="w-full"
-              size="lg"
-            >
-              Done
-            </Button>
-          </div>
-        </div>
 
         {/* Track Selection Sidebar */}
         {sidebarQuestionId && (
@@ -644,7 +590,7 @@ function UpdateAnswersPageContent() {
             onClose={handleCloseSidebar}
             questionText={
               sidebarQuestionId
-                ? allQuestions.find((q) => q.id === sidebarQuestionId)?.question_text || null
+                ? questionsMap.get(sidebarQuestionId)?.question_text || null
                 : null
             }
             tracks={extractedTracks}
