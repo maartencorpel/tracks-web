@@ -41,3 +41,26 @@
   }
 }
 
+@layer components {
+  /* InputOTP internal element styles */
+  [data-input-otp-container] {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  [data-input-otp-container] > div {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  [data-input-otp-container] input[data-input-otp] {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  [data-input-otp-container] > div > div[class*="relative"] {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+

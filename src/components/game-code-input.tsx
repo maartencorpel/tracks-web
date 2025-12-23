@@ -34,7 +34,7 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex justify-center">
+        <div className="flex justify-center w-full h-full">
           <InputOTP
             maxLength={4}
             value={gameId}
@@ -42,13 +42,13 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
             inputMode="numeric"
             onChange={(value) => setGameId(value)}
             disabled={isLoading}
-            containerClassName="flex items-center has-[:disabled]:opacity-50"
+            containerClassName="flex items-center has-[:disabled]:opacity-50 w-full h-full"
           >
-            <InputOTPGroup>
-              <InputOTPSlot index={0} className="w-12 h-12 text-lg font-mono" />
-              <InputOTPSlot index={1} className="w-12 h-12 text-lg font-mono" />
-              <InputOTPSlot index={2} className="w-12 h-12 text-lg font-mono" />
-              <InputOTPSlot index={3} className="w-12 h-12 text-lg font-mono" />
+            <InputOTPGroup className="w-full">
+              <InputOTPSlot index={0} className="flex-1 h-full text-lg font-mono" />
+              <InputOTPSlot index={1} className="flex-1 h-full text-lg font-mono" />
+              <InputOTPSlot index={2} className="flex-1 h-full text-lg font-mono" />
+              <InputOTPSlot index={3} className="flex-1 h-full text-lg font-mono" />
             </InputOTPGroup>
           </InputOTP>
         </div>
