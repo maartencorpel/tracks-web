@@ -23,16 +23,11 @@ export function TrackAnswer({
     : 'Unknown';
 
   return (
-    <div className="flex items-center gap-3 justify-start h-auto py-1 px-3">
+    <div className="group flex items-center gap-3 justify-start h-auto py-1 px-3">
       {/* Album Art */}
       <div className="shrink-0 relative">
         {albumImage ? (
           <>
-            <img
-              src={albumImage}
-              alt={`${track.name} album cover`}
-              className="w-16 h-16 rounded-xl object-cover"
-            />
             {track.external_urls.spotify && (
               <a
                 href={track.external_urls.spotify}
@@ -40,12 +35,17 @@ export function TrackAnswer({
                 rel="noopener noreferrer"
                 aria-label={`Open ${track.name} on Spotify`}
                 onClick={(e) => e.stopPropagation()}
-                className="absolute top-1 right-1 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10 bg-black/40"
-                style={{ margin: '4px' }}
+                className="absolute inline-flex whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10 bg-black/40 opacity-0 group-hover:opacity-100"
+                style={{ margin: '0px', left: '12px', top: '12px', justifyContent: 'center', alignItems: 'center' }}
               >
                 <ExternalLink className="h-4 w-4" />
               </a>
             )}
+            <img
+              src={albumImage}
+              alt={`${track.name} album cover`}
+              className="w-16 h-16 rounded-xl object-cover"
+            />
           </>
         ) : (
           <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center">
