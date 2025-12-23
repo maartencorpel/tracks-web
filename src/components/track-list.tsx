@@ -55,7 +55,7 @@ export function TrackList({
   }, [tracks, sortBy]);
 
   return (
-    <div className="space-y-4 my-6">
+    <div className="space-y-4 my-4">
       {/* Sort Controls */}
       <div className="flex justify-end">
         <Select

@@ -36,17 +36,38 @@ function TrackCardComponent({
     <Card
       onClick={handleSelect}
       className={cn(
-        'group transition-all rounded-none border-0 bg-transparent shadow-none',
+        'group transition-all hover:border-primary/50 rounded-none border-0 bg-transparent shadow-none',
         'hover:bg-accent/50 hover:border-accent',
         isSelected && 'border-primary bg-accent/50',
         !isLoading && !isSelected && 'cursor-pointer',
-        (isLoading || isSelected) && 'cursor-default'
+        (isLoading || isSelected) && 'cursor-default',
+        'p-2'
       )}
     >
-      <CardContent className="px-3 py-2">
+      <CardContent className="p-0">
         <div className="flex items-center gap-3 justify-start h-fit">
           {/* Album Art */}
-          <div className="shrink-0">
+          <div className="shrink-0 relative">
+            {/* Actions */}
+            <div className="shrink-0 flex items-center gap-2 absolute m-2 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+              {track.external_urls.spotify && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                >
+                  <a
+                    href={track.external_urls.spotify}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open ${track.name} on Spotify`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </Button>
+              )}
+            </div>
             {albumImage ? (
               <img
                 src={albumImage}
@@ -81,27 +102,6 @@ function TrackCardComponent({
             <p className="text-xs text-muted-foreground truncate" title={artistNames}>
               {artistNames}
             </p>
-          </div>
-
-          {/* Actions */}
-          <div className="shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            {track.external_urls.spotify && (
-              <Button
-                variant="ghost"
-                size="icon"
-                asChild
-              >
-                <a
-                  href={track.external_urls.spotify}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Open ${track.name} on Spotify`}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </Button>
-            )}
           </div>
         </div>
       </CardContent>
