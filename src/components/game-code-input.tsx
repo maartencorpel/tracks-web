@@ -34,7 +34,7 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex justify-center w-full h-full">
+        <div className="flex justify-center w-full h-[120px]">
           <InputOTP
             maxLength={4}
             value={gameId}
