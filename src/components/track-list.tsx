@@ -55,7 +55,7 @@ export function TrackList({
   }, [tracks, sortBy]);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 my-6">
       {/* Sort Controls */}
       <div className="flex justify-end">
         <Select
@@ -89,7 +89,7 @@ export function TrackList({
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="p-4 border rounded-lg space-y-3">
               <div className="flex gap-4">
-                <Skeleton className="h-16 w-16 rounded" />
+                <Skeleton className="h-14 w-14 rounded" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-3/4" />
                   <Skeleton className="h-3 w-1/2" />

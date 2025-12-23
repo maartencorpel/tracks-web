@@ -36,13 +36,14 @@ function TrackCardComponent({
     <Card
       onClick={handleSelect}
       className={cn(
-        'transition-all hover:border-primary/50 rounded-none border-0 bg-transparent shadow-none',
+        'group transition-all rounded-none border-0 bg-transparent shadow-none',
+        'hover:bg-accent/50 hover:border-accent',
         isSelected && 'border-primary bg-accent/50',
         !isLoading && !isSelected && 'cursor-pointer',
         (isLoading || isSelected) && 'cursor-default'
       )}
     >
-      <CardContent className="p-0">
+      <CardContent className="px-3 py-2">
         <div className="flex items-center gap-3 justify-start h-fit">
           {/* Album Art */}
           <div className="shrink-0">
@@ -50,10 +51,10 @@ function TrackCardComponent({
               <img
                 src={albumImage}
                 alt={`${track.name} album cover`}
-                className="w-16 h-16 rounded object-cover"
+                className="w-14 h-14 rounded object-cover"
               />
             ) : (
-              <div className="w-16 h-16 rounded bg-muted flex items-center justify-center">
+              <div className="w-14 h-14 rounded bg-muted flex items-center justify-center">
                 <span className="text-2xl">🎵</span>
               </div>
             )}
@@ -83,7 +84,7 @@ function TrackCardComponent({
           </div>
 
           {/* Actions */}
-          <div className="shrink-0 flex items-center gap-2">
+          <div className="shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             {track.external_urls.spotify && (
               <Button
                 variant="ghost"

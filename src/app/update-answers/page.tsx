@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { QuestionDropdown } from '@/components/question-dropdown';
 import { TrackSelectionSidebar } from '@/components/track-selection-sidebar';
-import { TrackPreview } from '@/components/track-preview';
+import { TrackAnswer } from '@/components/track-answer';
 import { ErrorDisplay } from '@/components/error-display';
 import ErrorBoundary from '@/components/error-boundary';
 import { SupabaseService } from '@/lib/supabase';
@@ -488,7 +488,7 @@ function UpdateAnswersPageContent() {
                 </CardHeader>
                 <CardContent className="px-3 pb-5 space-y-4">
                   {selectedTrack ? (
-                    <TrackPreview
+                    <TrackAnswer
                       track={selectedTrack}
                       onChange={() => handleOpenSidebar(questionId)}
                       isLoading={isSaving}

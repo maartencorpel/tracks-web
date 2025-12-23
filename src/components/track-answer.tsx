@@ -5,17 +5,17 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { ExternalLink, ChevronRight } from 'lucide-react';
 
-interface TrackPreviewProps {
+interface TrackAnswerProps {
   track: SpotifyTrack;
   onChange: () => void;
   isLoading?: boolean;
 }
 
-export function TrackPreview({
+export function TrackAnswer({
   track,
   onChange,
   isLoading = false,
-}: TrackPreviewProps) {
+}: TrackAnswerProps) {
   const albumImage = track.album.images?.[0]?.url || null;
   const artistNames = track.artists.map((a) => a.name).join(', ');
   const releaseYear = track.album.release_date
@@ -25,27 +25,42 @@ export function TrackPreview({
   return (
     <div className="flex items-center gap-3 justify-start h-auto py-1 px-3">
       {/* Album Art */}
-      <div className="shrink-0">
+      <div className="shrink-0 relative">
         {albumImage ? (
-          <img
-            src={albumImage}
-            alt={`${track.name} album cover`}
-            className="w-12 h-12 rounded object-cover"
-          />
+          <>
+            <img
+              src={albumImage}
+              alt={`${track.name} album cover`}
+              className="w-16 h-16 rounded-xl object-cover"
+            />
+            {track.external_urls.spotify && (
+              <a
+                href={track.external_urls.spotify}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Open ${track.name} on Spotify`}
+                onClick={(e) => e.stopPropagation()}
+                className="absolute top-1 right-1 inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10 bg-black/40"
+                style={{ margin: '4px' }}
+              >
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            )}
+          </>
         ) : (
-          <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
+          <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center">
             <span className="text-xl">🎵</span>
           </div>
         )}
       </div>
 
       {/* Track Info */}
-      <div className="flex-1 min-w-0 space-y-1">
-        <div>
-          <h4 className="font-medium text-sm truncate" title={track.name}>
+      <div className="flex-1 min-w-0 space-y-1 flex flex-col">
+        <div className="flex flex-col gap-1.5">
+          <h4 className="font-medium text-sm truncate leading-4" title={track.name}>
             {track.name}
           </h4>
-          <p className="text-xs text-muted-foreground truncate" title={artistNames}>
+          <p className="text-sm text-muted-foreground truncate" title={artistNames}>
             {artistNames}
           </p>
         </div>
@@ -64,23 +79,6 @@ export function TrackPreview({
 
       {/* Actions */}
       <div className="shrink-0 flex items-center gap-2">
-        {track.external_urls.spotify && (
-          <Button
-            variant="ghost"
-            size="icon"
-            asChild
-          >
-            <a
-              href={track.external_urls.spotify}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Open ${track.name} on Spotify`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          </Button>
-        )}
         <Button
           onClick={onChange}
           disabled={isLoading}
@@ -98,3 +96,4 @@ export function TrackPreview({
     </div>
   );
 }
+

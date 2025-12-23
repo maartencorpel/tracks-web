@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { TrackSelectionSidebar } from '@/components/track-selection-sidebar';
-import { TrackPreview } from '@/components/track-preview';
+import { TrackAnswer } from '@/components/track-answer';
 import { QuestionDropdown } from '@/components/question-dropdown';
 import { ErrorDisplay } from '@/components/error-display';
 import ErrorBoundary from '@/components/error-boundary';
@@ -552,7 +552,7 @@ function TracksPageContent() {
                   {question && (
                     <>
                       {selectedTrack ? (
-                        <TrackPreview
+                        <TrackAnswer
                           track={selectedTrack}
                           onChange={() => handleOpenSidebar(slotIndex)}
                           isLoading={isSaving}
