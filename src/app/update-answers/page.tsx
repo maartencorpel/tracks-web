@@ -561,7 +561,7 @@ function UpdateAnswersPageContent() {
                   <CardContent className="px-3 pb-5 space-y-4">
                     {question && questionId ? (
                       selectedTrack ? (
-                        <TrackPreview
+                        <TrackAnswer
                           track={selectedTrack}
                           onChange={() => handleOpenSidebar(questionId)}
                           isLoading={isSaving}
