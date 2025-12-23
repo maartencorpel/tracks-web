@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GameCodeInput } from '@/components/game-code-input';
-import { ErrorDisplay } from '@/components/error-display';
 import ErrorBoundary from '@/components/error-boundary';
 import { SupabaseService } from '@/lib/supabase';
 import { generateSpotifyAuthUrl } from '@/lib/spotify';
@@ -120,7 +119,7 @@ function HomePageContent() {
 
     const normalizedGameId = validation.value;
     setGameId(normalizedGameId);
-    setShowGameInput(false);
+    setShowGameInput(true); // Keep showing input so user can adjust
     await checkGame(normalizedGameId);
   };
 
@@ -137,68 +136,32 @@ function HomePageContent() {
     }
   };
 
-  const getStatusMessage = () => {
-    switch (joinState) {
-      case 'verifying':
-        return 'Verifying game...';
-      case 'idle':
-        return gameId ? 'Game found! Ready to join' : 'Enter the game code below to join';
-      case 'error':
-        return errorMessage || 'Something went wrong';
-      default:
-        return 'Ready to join!';
-    }
-  };
-
-  const getStatusVariant = () => {
-    switch (joinState) {
-      case 'verifying':
-        return 'default';
-      case 'idle':
-        return gameId ? 'success' : 'default';
-      case 'error':
-        return 'destructive';
-      default:
-        return 'default';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
-        {/* Game ID Display */}
-        {gameId && (
-          <Card>
-            <CardHeader className="text-center pb-4">
-              <CardTitle className="text-lg font-medium">Game Code</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center">
-                <div className="text-4xl font-bold mb-4 font-mono tracking-wider bg-muted rounded-lg py-4 px-6 border">
-                  {gameId}
-                </div>
-                <Alert variant={getStatusVariant()}>
-                  <AlertDescription className="text-center">{getStatusMessage()}</AlertDescription>
-                </Alert>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Game Code Input */}
         {showGameInput && (
-          <GameCodeInput 
-            onJoin={handleJoinWithGameId}
-            isLoading={joinState === 'verifying'}
-          />
-        )}
-
-        {/* Error Display */}
-        {joinState === 'error' && errorMessage && (
-          <ErrorDisplay 
-            message={errorMessage}
-            onRetry={showGameInput ? () => setShowGameInput(true) : undefined}
-          />
+          <>
+            <GameCodeInput 
+              onJoin={handleJoinWithGameId}
+              isLoading={joinState === 'verifying'}
+              initialGameId={gameId}
+            />
+            
+            {/* Error Alert below card */}
+            {joinState === 'error' && errorMessage && (
+              <Alert variant="destructive">
+                <AlertDescription className="text-center">{errorMessage}</AlertDescription>
+              </Alert>
+            )}
+            
+            {/* Success Alert below card */}
+            {joinState === 'idle' && gameId && (
+              <Alert variant="success">
+                <AlertDescription className="text-center">Game found! Redirecting to Spotify...</AlertDescription>
+              </Alert>
+            )}
+          </>
         )}
       </div>
     </div>

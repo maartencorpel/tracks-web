@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   InputOTP,
   InputOTPGroup,
@@ -9,15 +9,22 @@ import {
 import { REGEXP_ONLY_DIGITS } from 'input-otp';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface GameCodeInputProps {
   onJoin: (gameId: string) => void;
   isLoading?: boolean;
+  initialGameId?: string;
 }
 
-export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps) {
-  const [gameId, setGameId] = useState('');
+export function GameCodeInput({ onJoin, isLoading = false, initialGameId }: GameCodeInputProps) {
+  const [gameId, setGameId] = useState(initialGameId || '');
+  
+  // Sync with prop changes
+  useEffect(() => {
+    if (initialGameId) {
+      setGameId(initialGameId);
+    }
+  }, [initialGameId]);
 
   const handleSubmit = () => {
     if (gameId.length === 4) {
@@ -28,8 +35,8 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-xl">Join Game</CardTitle>
-        <CardDescription className="text-base">
+        <CardTitle className="text-[28px] leading-[100%]">Join Game</CardTitle>
+        <CardDescription className="text-sm text-white font-light">
           Enter game code and login with Spotify to join the game
         </CardDescription>
       </CardHeader>
@@ -45,17 +52,17 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
             containerClassName="flex items-center has-[:disabled]:opacity-50 w-full h-full"
           >
             <InputOTPGroup className="w-full">
-              <InputOTPSlot index={0} className="flex-1 h-full text-lg font-mono" />
-              <InputOTPSlot index={1} className="flex-1 h-full text-lg font-mono" />
-              <InputOTPSlot index={2} className="flex-1 h-full text-lg font-mono" />
-              <InputOTPSlot index={3} className="flex-1 h-full text-lg font-mono" />
+              <InputOTPSlot index={0} className="flex-1 h-full text-[32px] font-semibold font-mono" />
+              <InputOTPSlot index={1} className="flex-1 h-full text-[32px] font-semibold font-mono" />
+              <InputOTPSlot index={2} className="flex-1 h-full text-[32px] font-semibold font-mono" />
+              <InputOTPSlot index={3} className="flex-1 h-full text-[32px] font-semibold font-mono" />
             </InputOTPGroup>
           </InputOTP>
         </div>
         
         <Button 
           onClick={handleSubmit}
-          className="w-full rounded-full text-white" 
+          className="w-full rounded-[200px] text-white" 
           disabled={gameId.length !== 4 || isLoading}
           size="lg"
         >
@@ -70,15 +77,6 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
             </>
           )}
         </Button>
-        
-        {isLoading && (
-          <Alert>
-            <AlertDescription className="text-center flex items-center justify-center">
-              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              Verifying game code...
-            </AlertDescription>
-          </Alert>
-        )}
       </CardContent>
     </Card>
   );
