@@ -76,7 +76,7 @@ function CallbackPageContent() {
   };
 
   /**
-   * Shows an error message and stops the loading state
+   * Shows an error message and redirects to main page with error parameters
    * 
    * @param message - Error message to display
    */
@@ -84,6 +84,24 @@ function CallbackPageContent() {
     setIsLoading(false);
     setError(message);
     setCurrentStep(0);
+    setStatus('Redirecting to main page...');
+    
+    // Get game ID from stored value or state parameter for redirect
+    const storedGameId = browserStorage.get(PENDING_GAME_ID_KEY);
+    const stateParam = searchParams.get('state');
+    const gameId = storedGameId || stateParam || '';
+    
+    // Redirect to main page with error parameters
+    const errorParams = new URLSearchParams({
+      ...(gameId && { game: gameId }),
+      status: 'error',
+      message: encodeURIComponent(message)
+    });
+    
+    // Small delay to show error state briefly before redirect
+    setTimeout(() => {
+      router.push(`/?${errorParams.toString()}`);
+    }, 500);
   };
 
   const showSuccess = (message: string) => {

@@ -55,7 +55,7 @@ export function GameCodeInput({ onJoin, isLoading = false }: GameCodeInputProps)
         
         <Button 
           onClick={handleSubmit}
-          className="w-full" 
+          className="w-full rounded-full text-white" 
           disabled={gameId.length !== 4 || isLoading}
           size="lg"
         >

@@ -25,6 +25,38 @@ function HomePageContent() {
   // Get game ID from URL parameters
   useEffect(() => {
     const rawGameId = searchParams.get('game');
+    const statusParam = searchParams.get('status');
+    const messageParam = searchParams.get('message');
+    
+    // Handle error status from OAuth callback redirect
+    if (statusParam === 'error' && messageParam) {
+      const decodedMessage = decodeURIComponent(messageParam);
+      setErrorMessage(decodedMessage);
+      setJoinState('error');
+      setShowGameInput(true);
+      
+      // Set game ID if provided
+      if (rawGameId) {
+        const validation = validateGameCode(rawGameId);
+        if (validation.valid && validation.value) {
+          setGameId(validation.value);
+        }
+      }
+      
+      // Clear URL params after reading to prevent re-display on refresh
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('status');
+        url.searchParams.delete('message');
+        window.history.replaceState({}, '', url.toString());
+      }
+      
+      // Track page view
+      trackPageView('join_game', rawGameId || undefined);
+      return;
+    }
+    
+    // Normal game ID handling
     if (rawGameId) {
       const validation = validateGameCode(rawGameId);
       if (validation.valid && validation.value) {
