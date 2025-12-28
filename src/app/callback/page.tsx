@@ -28,7 +28,7 @@ import { SpotifyUser } from '@/types';
  * 6. Checks if player exists, joins game if needed
  * 7. Checks for existing answers
  * 8. Stores access token in sessionStorage
- * 9. Redirects to /questions (new player) or /update-answers (returning player)
+ * 9. Redirects to /update-answers (all players)
  */
 function CallbackPageContent() {
   const searchParams = useSearchParams();
@@ -217,12 +217,11 @@ function CallbackPageContent() {
         log('Player already exists in game');
       }
 
-      // Check for existing answers
+      // Check for existing answers (for logging/debugging purposes)
       updateProgress(4, 'Checking your answers...');
       log('Checking for existing answers');
       
       const existingAnswers = await SupabaseService.getPlayerAnswers(gamePlayerId);
-      const hasAnswers = existingAnswers.length > 0;
       
       log(`Found ${existingAnswers.length} existing answers`);
 
@@ -266,13 +265,11 @@ function CallbackPageContent() {
       // Clear stored game ID
       browserStorage.remove(PENDING_GAME_ID_KEY);
 
-      // Redirect based on whether answers exist
+      // Redirect to answers overview page
       updateProgress(6, 'Redirecting...');
-      log(`Redirecting to ${hasAnswers ? 'update-answers' : 'questions'}`);
+      log('Redirecting to update-answers');
 
-      const redirectPath = hasAnswers 
-        ? `/update-answers?gameId=${gameId}`
-        : `/questions?gameId=${gameId}`;
+      const redirectPath = `/update-answers?gameId=${gameId}`;
 
       // Use router.push for client-side navigation
       router.push(redirectPath);
