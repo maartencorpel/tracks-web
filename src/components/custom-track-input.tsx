@@ -6,7 +6,6 @@ import { TrackCard } from '@/components/track-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { extractTrackIdFromUrl, fetchTrackById } from '@/lib/spotify';
 
 interface CustomTrackInputProps {
@@ -79,31 +78,24 @@ export function CustomTrackInput({
   const displayError = externalError || error;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Add Custom Track</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Input
-            type="text"
-            placeholder="Paste Spotify track URL..."
-            value={url}
-            onChange={(e) => {
-              setUrl(e.target.value);
-              setError(null);
-            }}
-            disabled={isLoading}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !isLoading && !fetchedTrack) {
-                handleFetchTrack();
-              }
-            }}
-          />
-          <p className="text-xs text-muted-foreground">
-            Supports: open.spotify.com/track/... or spotify:track:...
-          </p>
-        </div>
+    <div className="space-y-4">
+      <div>
+        <Input
+          type="text"
+          placeholder="Paste Spotify track URL..."
+          value={url}
+          onChange={(e) => {
+            setUrl(e.target.value);
+            setError(null);
+          }}
+          disabled={isLoading}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !isLoading && !fetchedTrack) {
+              handleFetchTrack();
+            }
+          }}
+        />
+      </div>
 
         {displayError && (
           <Alert variant="destructive">
@@ -144,17 +136,16 @@ export function CustomTrackInput({
           </div>
         )}
 
-        {!fetchedTrack && !isFetching && (
-          <div className="flex gap-2">
-            <Button onClick={handleFetchTrack} disabled={isLoading || !url.trim()}>
-              Fetch Track
-            </Button>
-            <Button onClick={handleCancel} variant="outline" disabled={isLoading}>
-              Cancel
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {!fetchedTrack && !isFetching && (
+        <div className="flex gap-2">
+          <Button onClick={handleFetchTrack} disabled={isLoading || !url.trim()}>
+            Add track
+          </Button>
+          <Button onClick={handleCancel} variant="outline" disabled={isLoading}>
+            Cancel
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

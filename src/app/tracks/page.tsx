@@ -538,7 +538,7 @@ function TracksPageContent() {
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="px-6 pb-5 space-y-4">
                   {!isSlot1 && (
                     <QuestionDropdown
                       questions={allQuestions}
@@ -580,7 +580,7 @@ function TracksPageContent() {
         <Button
           onClick={handleAddSlot}
           variant="outline"
-          className="w-full"
+          className="w-full h-11 rounded-full"
         >
           Add Another Question
         </Button>

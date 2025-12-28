@@ -408,14 +408,23 @@ export class SupabaseService {
     questionId: string
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('player_question_answers')
         .delete()
         .eq('game_player_id', gamePlayerId)
         .eq('question_id', questionId)
+        .select()
 
       if (error) {
         return { success: false, error: error.message }
+      }
+
+      // Check if any rows were actually deleted
+      if (!data || data.length === 0) {
+        return { 
+          success: false, 
+          error: 'No answer found to delete. It may have already been deleted or you may not have permission.' 
+        }
       }
 
       return { success: true }

@@ -23,7 +23,7 @@ export function TrackAnswer({
     : 'Unknown';
 
   return (
-    <div className="group flex items-center gap-3 justify-start h-auto py-1 px-3">
+    <div className="group flex items-center gap-3 justify-start h-auto py-1 px-0">
       {/* Album Art */}
       <div className="shrink-0 relative">
         {albumImage ? (

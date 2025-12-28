@@ -435,18 +435,14 @@ function UpdateAnswersPageContent() {
       <div className="max-w-md mx-auto space-y-3 flex flex-col">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Update Your Answers</h1>
+          <h1 className="text-3xl font-bold">Select Tracks</h1>
           <p className="text-muted-foreground text-lg">
-            Change your track selections or add more questions
+            Add questions and answer them with your music.
           </p>
         </div>
 
         {/* Answered Questions */}
-        {answeredQuestionIds.length === 0 ? (
-          <p className="text-muted-foreground text-center py-4">
-            No answers yet. Add questions below to get started.
-          </p>
-        ) : (
+        {answeredQuestionIds.length > 0 && (
           answeredQuestionIds.map((questionId) => {
             const question = questionsMap.get(questionId);
             const selectedTrack = answers[questionId];
@@ -460,7 +456,7 @@ function UpdateAnswersPageContent() {
               <Card key={questionId}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <QuestionDropdown
                         questions={allQuestions}
                         selectedQuestionId={questionId}
@@ -486,7 +482,7 @@ function UpdateAnswersPageContent() {
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="px-3 pb-5 space-y-4">
+                <CardContent className="px-6 pb-5 space-y-4">
                   {selectedTrack ? (
                     <TrackAnswer
                       track={selectedTrack}
@@ -510,15 +506,6 @@ function UpdateAnswersPageContent() {
           })
         )}
 
-        {/* Add Another Question Button */}
-        <Button
-          onClick={handleAddQuestion}
-          variant="outline"
-          className="w-full"
-        >
-          Add Another Question
-        </Button>
-
         {/* New Questions Needing Tracks */}
         {selectedNewQuestionIds.length > 0 &&
           selectedNewQuestionIds.map((questionId, index) => {
@@ -537,7 +524,7 @@ function UpdateAnswersPageContent() {
                 <Card key={index}>
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <QuestionDropdown
                           questions={allQuestions}
                           selectedQuestionId={questionId}
@@ -558,7 +545,7 @@ function UpdateAnswersPageContent() {
                       </Button>
                     </div>
                   </CardHeader>
-                  <CardContent className="px-3 pb-5 space-y-4">
+                  <CardContent className="px-6 pb-5 space-y-4">
                     {question && questionId ? (
                       selectedTrack ? (
                         <TrackAnswer
@@ -582,6 +569,15 @@ function UpdateAnswersPageContent() {
                 </Card>
               );
             })}
+
+        {/* Add Another Question Button */}
+        <Button
+          onClick={handleAddQuestion}
+          variant="default"
+          className="w-full h-11 rounded-full"
+        >
+          Add Question
+        </Button>
 
         {/* Track Selection Sidebar */}
         {sidebarQuestionId && (
