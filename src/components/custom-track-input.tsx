@@ -78,7 +78,7 @@ export function CustomTrackInput({
   const displayError = externalError || error;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pt-3 pr-3">
       <div>
         <Input
           type="text"
