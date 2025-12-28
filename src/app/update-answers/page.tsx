@@ -346,10 +346,12 @@ function UpdateAnswersPageContent() {
   const handleRemoveQuestion = useCallback(
     async (questionId: string) => {
       // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:346',message:'handleRemoveQuestion called',data:{questionId,gamePlayerId,answeredQuestionIdsBefore:answeredQuestionIds},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      console.log('[DEBUG] handleRemoveQuestion called', { questionId, gamePlayerId });
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:346',message:'handleRemoveQuestion called',data:{questionId,gamePlayerId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
       // #endregion
       if (!gamePlayerId) {
         // #region agent log
+        console.log('[DEBUG] Early return: gamePlayerId is null', { questionId });
         fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:349',message:'Early return: gamePlayerId is null',data:{questionId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
         // #endregion
         return;
@@ -368,24 +370,28 @@ function UpdateAnswersPageContent() {
         // #endregion
         const result = await SupabaseService.deleteAnswer(gamePlayerId, questionId);
         // #region agent log
+        console.log('[DEBUG] After deleteAnswer API call', { questionId, resultSuccess: result.success, resultError: result.error });
         fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:361',message:'After deleteAnswer API call',data:{questionId,resultSuccess:result.success,resultError:result.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
         // #endregion
 
         if (!result.success) {
           // #region agent log
+          console.error('[DEBUG] deleteAnswer failed', { questionId, error: result.error });
           fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:363',message:'deleteAnswer failed',data:{questionId,error:result.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
           // #endregion
           throw new Error(result.error || 'Failed to delete answer');
         }
 
         // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:367',message:'Before state updates',data:{questionId,answeredQuestionIdsBefore:answeredQuestionIds,answersBefore:Object.keys(answers)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        console.log('[DEBUG] Before state updates', { questionId });
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:367',message:'Before state updates',data:{questionId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
         // #endregion
         // Update state
         setAnswers((prev) => {
           const newAnswers = { ...prev };
           delete newAnswers[questionId];
           // #region agent log
+          console.log('[DEBUG] setAnswers callback executed', { questionId, answersBefore: Object.keys(prev), answersAfter: Object.keys(newAnswers) });
           fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:370',message:'setAnswers callback executed',data:{questionId,answersBefore:Object.keys(prev),answersAfter:Object.keys(newAnswers)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
           // #endregion
           return newAnswers;
@@ -393,6 +399,7 @@ function UpdateAnswersPageContent() {
         setAnsweredQuestionIds((prev) => {
           const filtered = prev.filter((id) => id !== questionId);
           // #region agent log
+          console.log('[DEBUG] setAnsweredQuestionIds callback executed', { questionId, answeredQuestionIdsBefore: prev, answeredQuestionIdsAfter: filtered });
           fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:372',message:'setAnsweredQuestionIds callback executed',data:{questionId,answeredQuestionIdsBefore:prev,answeredQuestionIdsAfter:filtered},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
           // #endregion
           return filtered;
@@ -408,7 +415,7 @@ function UpdateAnswersPageContent() {
         setIsDeleting((prev) => ({ ...prev, [questionId]: false }));
       }
     },
-    [gamePlayerId, answeredQuestionIds, answers]
+    [gamePlayerId]
   );
 
   const handleAddQuestion = () => {
