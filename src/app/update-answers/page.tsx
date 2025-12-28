@@ -374,25 +374,32 @@ function UpdateAnswersPageContent() {
         fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:361',message:'After deleteAnswer API call',data:{questionId,resultSuccess:result.success,resultError:result.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
         // #endregion
 
-        if (!result.success) {
+        // Check if the error is "no answer found" - treat as success (idempotent delete)
+        const isNoAnswerFound = result.error?.includes('No answer found to delete');
+        
+        if (!result.success && !isNoAnswerFound) {
           // #region agent log
-          console.error('[DEBUG] deleteAnswer failed', { questionId, error: result.error });
-          fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:363',message:'deleteAnswer failed',data:{questionId,error:result.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          console.error('[DEBUG] deleteAnswer failed with real error', { questionId, error: result.error });
+          fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:377',message:'deleteAnswer failed with real error',data:{questionId,error:result.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
           // #endregion
           throw new Error(result.error || 'Failed to delete answer');
         }
 
         // #region agent log
+        if (isNoAnswerFound) {
+          console.log('[DEBUG] No answer found to delete - treating as success (idempotent)', { questionId });
+          fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:382',message:'No answer found - treating as success',data:{questionId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        }
         console.log('[DEBUG] Before state updates', { questionId });
-        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:367',message:'Before state updates',data:{questionId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:385',message:'Before state updates',data:{questionId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
         // #endregion
-        // Update state
+        // Update state (remove question from UI regardless of whether answer existed in DB)
         setAnswers((prev) => {
           const newAnswers = { ...prev };
           delete newAnswers[questionId];
           // #region agent log
           console.log('[DEBUG] setAnswers callback executed', { questionId, answersBefore: Object.keys(prev), answersAfter: Object.keys(newAnswers) });
-          fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:370',message:'setAnswers callback executed',data:{questionId,answersBefore:Object.keys(prev),answersAfter:Object.keys(newAnswers)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:390',message:'setAnswers callback executed',data:{questionId,answersBefore:Object.keys(prev),answersAfter:Object.keys(newAnswers)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
           // #endregion
           return newAnswers;
         });
@@ -400,7 +407,7 @@ function UpdateAnswersPageContent() {
           const filtered = prev.filter((id) => id !== questionId);
           // #region agent log
           console.log('[DEBUG] setAnsweredQuestionIds callback executed', { questionId, answeredQuestionIdsBefore: prev, answeredQuestionIdsAfter: filtered });
-          fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:372',message:'setAnsweredQuestionIds callback executed',data:{questionId,answeredQuestionIdsBefore:prev,answeredQuestionIdsAfter:filtered},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:395',message:'setAnsweredQuestionIds callback executed',data:{questionId,answeredQuestionIdsBefore:prev,answeredQuestionIdsAfter:filtered},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
           // #endregion
           return filtered;
         });
