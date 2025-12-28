@@ -345,7 +345,13 @@ function UpdateAnswersPageContent() {
 
   const handleRemoveQuestion = useCallback(
     async (questionId: string) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:346',message:'handleRemoveQuestion called',data:{questionId,gamePlayerId,answeredQuestionIdsBefore:answeredQuestionIds},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       if (!gamePlayerId) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:349',message:'Early return: gamePlayerId is null',data:{questionId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+        // #endregion
         return;
       }
 
@@ -357,20 +363,44 @@ function UpdateAnswersPageContent() {
       });
 
       try {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:360',message:'Before deleteAnswer API call',data:{questionId,gamePlayerId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         const result = await SupabaseService.deleteAnswer(gamePlayerId, questionId);
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:361',message:'After deleteAnswer API call',data:{questionId,resultSuccess:result.success,resultError:result.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
 
         if (!result.success) {
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:363',message:'deleteAnswer failed',data:{questionId,error:result.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
           throw new Error(result.error || 'Failed to delete answer');
         }
 
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:367',message:'Before state updates',data:{questionId,answeredQuestionIdsBefore:answeredQuestionIds,answersBefore:Object.keys(answers)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         // Update state
         setAnswers((prev) => {
           const newAnswers = { ...prev };
           delete newAnswers[questionId];
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:370',message:'setAnswers callback executed',data:{questionId,answersBefore:Object.keys(prev),answersAfter:Object.keys(newAnswers)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
           return newAnswers;
         });
-        setAnsweredQuestionIds((prev) => prev.filter((id) => id !== questionId));
+        setAnsweredQuestionIds((prev) => {
+          const filtered = prev.filter((id) => id !== questionId);
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:372',message:'setAnsweredQuestionIds callback executed',data:{questionId,answeredQuestionIdsBefore:prev,answeredQuestionIdsAfter:filtered},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
+          return filtered;
+        });
       } catch (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:377',message:'Error caught in handleRemoveQuestion',data:{questionId,errorMessage:error instanceof Error ? error.message : 'Unknown error'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         const errorMessage =
           error instanceof Error ? error.message : 'Failed to delete answer';
         setErrors((prev) => ({ ...prev, [questionId]: errorMessage }));
@@ -378,7 +408,7 @@ function UpdateAnswersPageContent() {
         setIsDeleting((prev) => ({ ...prev, [questionId]: false }));
       }
     },
-    [gamePlayerId]
+    [gamePlayerId, answeredQuestionIds, answers]
   );
 
   const handleAddQuestion = () => {
@@ -469,7 +499,12 @@ function UpdateAnswersPageContent() {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleRemoveQuestion(questionId)}
+                      onClick={() => {
+                        // #region agent log
+                        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:472',message:'Remove button clicked',data:{questionId,answeredQuestionIdsCurrent:answeredQuestionIds},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                        // #endregion
+                        handleRemoveQuestion(questionId);
+                      }}
                       disabled={isSaving || isDeletingQuestion}
                       className="shrink-0"
                       aria-label="Remove question"

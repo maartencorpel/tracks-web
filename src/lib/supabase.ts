@@ -407,6 +407,9 @@ export class SupabaseService {
     gamePlayerId: string,
     questionId: string
   ): Promise<{ success: boolean; error?: string }> {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:406',message:'deleteAnswer called',data:{gamePlayerId,questionId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     try {
       const { data, error } = await supabase
         .from('player_question_answers')
@@ -415,20 +418,36 @@ export class SupabaseService {
         .eq('question_id', questionId)
         .select()
 
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:416',message:'deleteAnswer query result',data:{gamePlayerId,questionId,hasError:!!error,errorMessage:error?.message,dataLength:data?.length,deletedRows:data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+
       if (error) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:418',message:'deleteAnswer error from Supabase',data:{gamePlayerId,questionId,errorMessage:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         return { success: false, error: error.message }
       }
 
       // Check if any rows were actually deleted
       if (!data || data.length === 0) {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:423',message:'deleteAnswer: no rows deleted',data:{gamePlayerId,questionId,dataLength:data?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
         return { 
           success: false, 
           error: 'No answer found to delete. It may have already been deleted or you may not have permission.' 
         }
       }
 
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:430',message:'deleteAnswer success',data:{gamePlayerId,questionId,deletedCount:data.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       return { success: true }
     } catch (error) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:432',message:'deleteAnswer exception caught',data:{gamePlayerId,questionId,errorMessage:error instanceof Error ? error.message : 'Unknown error'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
