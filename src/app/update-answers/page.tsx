@@ -366,7 +366,11 @@ function UpdateAnswersPageContent() {
 
       try {
         // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:360',message:'Before deleteAnswer API call',data:{questionId,gamePlayerId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        console.log('[DEBUG] Before deleteAnswer API call', { questionId, gamePlayerId, currentAnswers: Object.keys(answers), currentAnsweredIds: answeredQuestionIds });
+        // First, let's check what's actually in the database
+        const dbAnswers = await SupabaseService.getPlayerAnswers(gamePlayerId);
+        console.log('[DEBUG] Answers in database', { dbAnswers: dbAnswers.map(a => ({ questionId: a.question_id, gamePlayerId: a.game_player_id })) });
+        fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'update-answers/page.tsx:367',message:'Before deleteAnswer API call',data:{questionId,gamePlayerId,currentAnswers:Object.keys(answers),currentAnsweredIds:answeredQuestionIds,dbAnswers:dbAnswers.map(a=>({questionId:a.question_id,gamePlayerId:a.game_player_id}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
         // #endregion
         const result = await SupabaseService.deleteAnswer(gamePlayerId, questionId);
         // #region agent log

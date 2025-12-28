@@ -408,9 +408,25 @@ export class SupabaseService {
     questionId: string
   ): Promise<{ success: boolean; error?: string }> {
     // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:406',message:'deleteAnswer called',data:{gamePlayerId,questionId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    console.log('[DEBUG] deleteAnswer called', { gamePlayerId, questionId, gamePlayerIdType: typeof gamePlayerId, questionIdType: typeof questionId });
+    fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:406',message:'deleteAnswer called',data:{gamePlayerId,questionId},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
     // #endregion
     try {
+      // First, let's check what exists in the database
+      const { data: existingData, error: checkError } = await supabase
+        .from('player_question_answers')
+        .select('game_player_id, question_id')
+        .eq('game_player_id', gamePlayerId)
+        .eq('question_id', questionId);
+      
+      console.log('[DEBUG] Check existing answer before delete', { 
+        gamePlayerId, 
+        questionId, 
+        existingData, 
+        existingCount: existingData?.length,
+        checkError: checkError?.message 
+      });
+
       const { data, error } = await supabase
         .from('player_question_answers')
         .delete()
@@ -419,7 +435,8 @@ export class SupabaseService {
         .select()
 
       // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:416',message:'deleteAnswer query result',data:{gamePlayerId,questionId,hasError:!!error,errorMessage:error?.message,dataLength:data?.length,deletedRows:data},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      console.log('[DEBUG] deleteAnswer query result', { gamePlayerId, questionId, hasError: !!error, errorMessage: error?.message, dataLength: data?.length, deletedRows: data });
+      fetch('http://127.0.0.1:7243/ingest/c8f47d84-03f9-42b8-b409-8b436f7ea2e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabase.ts:420',message:'deleteAnswer query result',data:{gamePlayerId,questionId,hasError:!!error,errorMessage:error?.message,dataLength:data?.length,deletedRows:data,existingDataBefore:existingData},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
       // #endregion
 
       if (error) {
